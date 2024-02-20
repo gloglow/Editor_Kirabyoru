@@ -376,12 +376,13 @@
 "Assets/Scripts/DataManager.cs"
 "Assets/Scripts/EditorJudgeLine.cs"
 "Assets/Scripts/EditorManager.cs"
-"Assets/Scripts/HitCollider.cs"
-"Assets/Scripts/HitManager.cs"
+"Assets/Scripts/EditorNote.cs"
 "Assets/Scripts/Note.cs"
 "Assets/Scripts/NoteData.cs"
+"Assets/Scripts/ObjectPoolManager.cs"
 "Assets/Scripts/SongData.cs"
-"Assets/Scripts/TouchArea.cs"
+"Assets/Scripts/SubBeat.cs"
+"Assets/Scripts/TmpNote.cs"
 "Assets/Scripts/UIManager.cs"
 -langversion:9.0
 

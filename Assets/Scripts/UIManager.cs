@@ -3,55 +3,71 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System.IO;
-using System.Windows.Forms;
-using System.Text.RegularExpressions;
-using Ookii.Dialogs;
 using TMPro;
 
 public class UIManager : MonoBehaviour
 {
+    public EditorManager editorManager;
     public GameObject defaultUI;
     public GameObject menuUI;
     public GameObject optionUI;
     public TextMeshProUGUI songText;
-
-    VistaOpenFileDialog fileDialog;
-    Stream openStream = null;
+    [SerializeField] private TMP_InputField barInput;
+    [SerializeField] private TMP_InputField beatInput;
+    [SerializeField] private TMP_InputField xPosInput;
+    [SerializeField] private TMP_InputField unitVecXInput;
+    [SerializeField] private TMP_InputField unitVecYInput;
+    [SerializeField] private TMP_InputField bpmInput;
 
     private void Start()
     {
-        fileDialog = new VistaOpenFileDialog();
+        InitiallizeNoteInfo();
+        ChangeOption();
+    }
+    public void ChangeSongText(string text)
+    {
+        songText.text = text;
+    }
+    
+    public void InitiallizeNoteInfo()
+    {
+        barInput.text = string.Empty;
+        beatInput.text = string.Empty;
+        xPosInput.text = string.Empty;
+        unitVecXInput.text = string.Empty;
+        unitVecYInput.text = string.Empty;
     }
 
-    public string MusicFileSelect()
+    public void ShowNoteInfo(Vector2 barBeat, float xPos, float unitVecX, float unitVecY)
     {
-        fileDialog.Filter = "wav files (*.wav)|*.wav|mp3 files (*.mp3)|*.mp3";
-        fileDialog.FilterIndex = 2;
-        fileDialog.Title = "Music File Dialog";
-        string fileAddress = FileOpen();
-        Regex regex = new Regex(@"\..*$");
-        songText.text = regex.Replace(Path.GetFileName(fileAddress), "");
-        return fileAddress;
+        barInput.text = barBeat.x.ToString();
+        beatInput.text = barBeat.y.ToString();
+        xPosInput.text = xPos.ToString();
+        unitVecXInput.text = unitVecX.ToString();
+        unitVecYInput.text = unitVecY.ToString();
     }
 
-    public string JsonFileSelect()
+    public void MakeNote()
     {
-        fileDialog.Filter = "json files (*.json)";
-        fileDialog.FilterIndex = 1;
-        fileDialog.Title = "json File Dialog";
-        return FileOpen();
+        editorManager.AddNote(float.Parse(xPosInput.text), int.Parse(barInput.text), float.Parse(beatInput.text), float.Parse(unitVecXInput.text), float.Parse(unitVecYInput.text));
     }
 
-    private string FileOpen()
+    public void ModifyNoteInfo()
     {
-        if (fileDialog.ShowDialog() == DialogResult.OK)
+        float xPos = float.Parse(xPosInput.text);
+        if(Mathf.Abs(xPos) > 5)
         {
-            if ((openStream = fileDialog.OpenFile()) != null)
-            {
-                return fileDialog.FileName;
-            }
+            xPos = xPos > 0 ? 5 : -5;
         }
-        return null;
+        float unitVecX = float.Parse(unitVecXInput.text);
+        float unitVecY = float.Parse(unitVecYInput.text);
+        editorManager.ModifyNote(new Vector3(xPos, unitVecX, unitVecY));
+    }
+
+    public void ChangeOption()
+    {
+        editorManager.bpm = int.Parse(bpmInput.text);
+        editorManager.secondPerBeat = 60 / editorManager.bpm;
     }
 
     public void BackToDefault()
@@ -73,5 +89,12 @@ public class UIManager : MonoBehaviour
         defaultUI.SetActive(false);
         menuUI.SetActive(false);
         optionUI.SetActive(true);
+    }
+
+    public void NoteMakeMode()
+    {
+        defaultUI.SetActive(false);
+        menuUI.SetActive(false);
+        optionUI.SetActive(false);
     }
 }

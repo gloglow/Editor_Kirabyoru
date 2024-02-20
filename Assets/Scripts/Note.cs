@@ -1,7 +1,10 @@
 using UnityEngine;
+using UnityEngine.Pool;
 
 public class Note : MonoBehaviour
 {
+    public IObjectPool<GameObject> notePool { get; set; }
+
     public Vector3 dirVec; // direction vector to move.
 
     // variables to calculate move speed.
@@ -9,14 +12,10 @@ public class Note : MonoBehaviour
     public float initialTime; // time when note is activated
     private Vector3 destination; // on judge line.
     private float dist; // distance between initial position and destination.
-
-    // range of perfect and great grade
-    [SerializeField] private float perfectRange, greatRange; // 0.75, 0.83
     public float index;
     private float speed;
 
     public EditorManager editorManager;
-
     public int status; // 0 : idle, 1 : set destination and speed, 2 : move
 
     private void Update()
@@ -27,13 +26,13 @@ public class Note : MonoBehaviour
                 break;
 
             case 1: // when activated by stage manager
-                speed = 1 /*gamemanager speed*/;
+                speed = 1;
                 initialPos = transform.position; // initial position (position of spawner)
                 initialTime = (float)AudioSettings.dspTime; // activated timing
-                
+
                 RaycastHit rayHit;
                 int layerMask = (1 << 7); // layer of real judge line
-                
+
                 if (Physics.Raycast(transform.position, dirVec, out rayHit, Mathf.Infinity, layerMask))
                 {
                     destination = rayHit.point; // set destination on judge line
@@ -54,16 +53,16 @@ public class Note : MonoBehaviour
 
             case 2:
                 // moving mechanism is same.
-                defaultSpeed= (((float)AudioSettings.dspTime - initialTime) / (editorManager.secondPerBeat * (1 / speed * 2))) * dist;
+                defaultSpeed = (((float)AudioSettings.dspTime - initialTime) / (editorManager.secondPerBeat * (1 / speed * 2))) * dist;
                 transform.position = initialPos + dirVec * defaultSpeed;
                 break;
         }
     }
-    
 
     public void Exit()
     {
         // set note status 0 and return to note object pool.
         status = 0;
+        notePool.Release(gameObject);
     }
 }

@@ -39,8 +39,8 @@ public class EditorJudgeLine : MonoBehaviour
             lineScreenStartPos = new Vector2(Screen.width * 0.5f + tmp, Screen.height * lineHeightPos);
         }
         // To make ideal line for every resolution
-        lineStartPos = Camera.main.ScreenToWorldPoint(lineScreenStartPos) + new Vector3(0, -2, 0);
-        lineEndPos = new Vector3(lineStartPos.x * (-1), lineStartPos.y) + new Vector3(0, -2, 0);
+        lineStartPos = Camera.main.ScreenToWorldPoint(lineScreenStartPos) + new Vector3(0, -3, 0);
+        lineEndPos = new Vector3(lineStartPos.x * (-1), lineStartPos.y);
         lineStartPos.z = 0;
         lineEndPos.z = 0;
     }

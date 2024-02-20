@@ -6,18 +6,26 @@ using UnityEngine.UI;
 
 public class Bar : MonoBehaviour
 {
-    [SerializeField] private GameObject prefab_beat;
-    public int num;
+    public int barNum; // n th bar
 
     private void Start()
     {
-        for (int i = 0; i < 4; i++)
+        for (int i = 1; i <= 4; i++)
         {
-            GameObject obj = Instantiate(prefab_beat, transform);
-            Beat beat = obj.GetComponent<Beat>();
-            beat.barNum = num;
-            beat.beatNum = i + 1;
-            beat.transform.localPosition += new Vector3(0, i * 2, 0);
+            // set each beat text ("n - n")
+            Transform obj = transform.GetChild(i);
+            TextMeshPro textMesh = obj.GetComponent<TextMeshPro>();
+            textMesh.text = barNum.ToString() + "-" + i.ToString();
+
+            for (int j = 0; j < 3; j++)
+            {
+                // set each subBeat barNum and beatNum
+                Transform childObj = obj.GetChild(j);
+                SubBeat subBeat = childObj.GetComponent<SubBeat>();
+                subBeat.barNum = barNum;
+                subBeat.beatNum = i + (j * 0.25f);
+            }
         }
     }
+
 }

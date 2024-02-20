@@ -9,6 +9,7 @@ public class AudioManager : MonoBehaviour
     // manage audio play and stop
     public AudioSource audioSource;
     public UIManager uiManager;
+    public DataManager dataManager;
 
     private void Start()
     {
@@ -17,7 +18,7 @@ public class AudioManager : MonoBehaviour
 
     public void MusicSelect()
     {
-        StartCoroutine(ChangeMusic(uiManager.MusicFileSelect()));
+        StartCoroutine(ChangeMusic(dataManager.MusicFileSelect()));
     }
 
     public IEnumerator ChangeMusic(string fileAddress)
@@ -31,6 +32,7 @@ public class AudioManager : MonoBehaviour
             {
                 AudioClip audioClip = DownloadHandlerAudioClip.GetContent(www);
                 audioSource.clip = audioClip;
+                uiManager.BackToDefault();
             }
             else
             {

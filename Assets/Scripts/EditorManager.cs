@@ -28,12 +28,15 @@ public class EditorManager : MonoBehaviour
 
     private Vector2 mousePos; 
     [SerializeField] private Vector3 memoryCameraPos;
+    [SerializeField] private int barInterval; // interval between bars. set 8
     [SerializeField] private int nextBarYPos; // when make new bar, its position. set (0, 4, 0) 
     
     public int targetNoteIndex;
 
     private bool flagMakeNote = false;
     private bool flagPlay = false;
+
+    [SerializeField] float scrollSpeed; // set 0.0002
 
 
     void Update()
@@ -52,31 +55,41 @@ public class EditorManager : MonoBehaviour
                     {
                         int rayHitLayer = rayHit.transform.gameObject.layer;
                         GameObject obj = rayHit.transform.gameObject;
-                        if(rayHitLayer == 6)
+                        if(rayHitLayer == 6) // when bar clicked
                         {
-                            bars.gameObject.SetActive(false);
-                            uiManager.NoteMakeMode();
-                            memoryCameraPos = Camera.main.transform.position;
-                            Camera.main.transform.position = new Vector3(0, 0, -10);
-
-                            SubBeat beatPart = obj.GetComponent<SubBeat>();
-                            tmpNote.gameObject.SetActive(true);
-                            tmpNote.bar = beatPart.barNum;
-                            tmpNote.beat = beatPart.beatNum;
-                            tmpNote.transform.position = new Vector3(0, 4, 0);
-                            tmpNote.status = 0;
-                            flagMakeNote = true;
+                            MakeNote(obj);
                         }
-                        else if (rayHitLayer == 8)
+                        else if (rayHitLayer == 8) // when note clicked
                         {
-                            targetNoteIndex = FindNoteIndex(obj.GetComponent<EditorNote>());
-                            if(targetNoteIndex != -1)
-                                uiManager.ShowNoteInfo(noteList[targetNoteIndex]);
+                            ShowNote(obj);
                         }
                     }                
                 }
             }
         }
+    }
+
+    private void MakeNote(GameObject rayHit)
+    {
+        bars.gameObject.SetActive(false);
+        uiManager.NoteMakeMode();
+        memoryCameraPos = Camera.main.transform.position;
+        Camera.main.transform.position = new Vector3(0, 0, -10);
+
+        SubBeat beatPart = rayHit.GetComponent<SubBeat>();
+        tmpNote.gameObject.SetActive(true);
+        tmpNote.bar = beatPart.barNum;
+        tmpNote.beat = beatPart.beatNum;
+        tmpNote.transform.position = new Vector3(0, 4, 0);
+        tmpNote.status = 0;
+        flagMakeNote = true;
+    }
+
+    private void ShowNote(GameObject rayHit)
+    {
+        targetNoteIndex = FindNoteIndex(rayHit.GetComponent<EditorNote>());
+        if (targetNoteIndex != -1)
+            uiManager.ShowNoteInfo(noteList[targetNoteIndex]);
     }
 
     private int FindNoteIndex(EditorNote note) // find note index from noteList. if failed, return -1.
@@ -103,18 +116,12 @@ public class EditorManager : MonoBehaviour
         }
     }
 
-    public void BackToEditorMode()
-    {
-        flagPlay = false;
-        Camera.main.transform.position = memoryCameraPos;
-    }
-
     public void FlagPlayChange(bool flag)
     {
         flagPlay = flag;
     }
 
-    private void ScreenDrag()
+    private void ScreenDrag() // in editor mode, scroll by mouse
     {
         if (Input.GetMouseButtonDown(0))
         {
@@ -122,64 +129,54 @@ public class EditorManager : MonoBehaviour
         }
         if (Input.GetMouseButton(0))
         {
-            Camera.main.transform.position += new Vector3(0, (mousePos.y - Input.mousePosition.y) * 0.0001f, 0);
+            Camera.main.transform.position += new Vector3(0, (mousePos.y - Input.mousePosition.y) * scrollSpeed, 0);
         }
     }
 
-    public void MakeBar()
+    public void MakeBar() // when make bar button pressed.
     {
         GameObject obj = Instantiate(prefab_bar, bars.transform);
         Bar bar = obj.GetComponent<Bar>();
         bar.barNum = barList.Count + 1;
         bar.transform.position = new Vector3(0, nextBarYPos, 0);
         barList.Add(bar);
-        nextBarYPos += 32;
+        nextBarYPos += barInterval;
     }
 
-    public void DeleteBar()
+    public void DeleteBar() // when delete bar button pressed.
     {
         if (barList.Count <= 0)
             return;
-        int i;
-        for (i =0; i < noteList.Count; i++)
+
+        // remove notes on bar.
+        for (int i = noteList.Count - 1; i >= 0; i--)
         {
             if (noteList[i].bar >= barList.Count)
             {
-                noteList.RemoveRange(i, noteList.Count - i);
-                break;   
+                DeleteNote(i);
             }
+            else
+                break;
         }
+
+        // remove bar.
         Destroy(barList[barList.Count - 1].gameObject);
         barList.RemoveAt(barList.Count - 1);
-        nextBarYPos -= 32;
+        nextBarYPos -= barInterval;
     }
 
     public void AddNote(float xPos, int bar, float beat, float unitVecX, float unitVecY)
     {
-        if (flagPlay)
-        {
-            flagPlay = false;
-            player.MusicStop();
-        }
-        int actualBar = bar - 1;
-        float actualBeat = beat - 1;
-        while (barList.Count <= actualBar)
-        {
-            MakeBar();
-        }
+        // if there isnt bar
+        BarMakeForNoteMaking(bar - 1);
+
+        // make note
         GameObject obj = Instantiate(prefab_note);
         EditorNote editorNote = obj.GetComponent<EditorNote>();
-        editorNote.xPos = xPos;
-        editorNote.bar = bar;
-        editorNote.beat = beat;
-        editorNote.unitVecX = unitVecX;
-        editorNote.unitVecY = unitVecY;
-        editorNote.transform.parent = barList[actualBar].transform.GetChild((int)actualBeat).transform.GetChild((int)((actualBeat - (int)actualBeat) / 0.25f));
-        editorNote.transform.position = new Vector3(editorNote.xPos, 0, 0);
-        editorNote.transform.localPosition = new Vector3(editorNote.transform.localPosition.x, 0, 0);
-        
+        editorNote = NoteSetting(editorNote, xPos, bar, beat, unitVecX, unitVecY);
         noteList.Add(editorNote);
         noteList.Sort(NoteCompare);
+
         flagMakeNote = false;
         bars.gameObject.SetActive(true);
         uiManager.BackToDefault();
@@ -202,48 +199,60 @@ public class EditorManager : MonoBehaviour
         }
     }
 
-    public void ModifyNote(float xPos, int bar, float beat, float unitVecX, float unitVecY)
+    public void ModifyNote(float xPos, int bar, float beat, float unitVecX, float unitVecY) // modify button pressed.
     {
-        if (flagPlay)
-        {
-            flagPlay = false;
-            player.MusicStop();
-        }
-        noteList[targetNoteIndex].xPos = xPos;
+        // if there isnt bar
+        BarMakeForNoteMaking(bar - 1);
 
-        noteList[targetNoteIndex].bar = bar;
-        noteList[targetNoteIndex].beat = beat;
-        noteList[targetNoteIndex].unitVecX = unitVecX;
-        noteList[targetNoteIndex].unitVecY = unitVecY;
-        int actualBar = bar - 1;
-        float actualBeat = beat - 1;
+        // note modify.
+        noteList[targetNoteIndex] = NoteSetting(noteList[targetNoteIndex], xPos, bar, beat, unitVecX, unitVecY);
+    }
+
+    private void BarMakeForNoteMaking(int actualBar)
+    {
         while (barList.Count <= actualBar)
         {
             MakeBar();
         }
-
-        noteList[targetNoteIndex].transform.parent = barList[actualBar].transform.GetChild((int)actualBeat).transform.GetChild((int)((actualBeat - (int)actualBeat) / 0.25f));
-        noteList[targetNoteIndex].transform.position = new Vector3(noteList[targetNoteIndex].xPos, 0, 0);
-        noteList[targetNoteIndex].transform.localPosition = new Vector3(noteList[targetNoteIndex].transform.localPosition.x, 0, 0);
     }
 
-    public void DeleteNote()
+    private EditorNote NoteSetting(EditorNote editorNote, float xPos, int bar, float beat, float unitVecX, float unitVecY)
     {
-        if (flagPlay)
-        {
-            flagPlay = false;
-            player.MusicStop();
-        }
+        editorNote.xPos = xPos;
+        editorNote.bar = bar;
+        editorNote.beat = beat;
+        editorNote.unitVecX = unitVecX;
+        editorNote.unitVecY = unitVecY;
+
+        int actualBar = bar - 1;
+        float actualBeat = beat - 1;
+        editorNote.transform.parent = barList[actualBar].transform.GetChild((int)actualBeat).transform.GetChild((int)((actualBeat - (int)actualBeat) / 0.25f));
+        editorNote.transform.position = new Vector3(editorNote.xPos, 0, 0);
+        editorNote.transform.localPosition = new Vector3(editorNote.transform.localPosition.x, 0, 0);
+
+        return editorNote;
+    }
+
+    public void DeleteNote() // delete button pressed.
+    {
         if (targetNoteIndex == -1)
             return;
 
-        Destroy(noteList[targetNoteIndex].gameObject);
-        noteList.RemoveAt(targetNoteIndex);
-        targetNoteIndex = -1;
-        uiManager.InitiallizeNoteInfo();
+        DeleteNote(targetNoteIndex);
     }
 
-    public void SheetSave()
+    private void DeleteNote(int index)
+    {
+        Destroy(noteList[index].gameObject);
+        noteList.RemoveAt(index);
+        if(targetNoteIndex == index)
+        {
+            targetNoteIndex = -1;
+            uiManager.InitiallizeNoteInfo();
+        }
+    }
+
+    public void SheetSave() // save current note list into json file. 
     { 
         List<NoteData> notes = new List<NoteData>();
         for(int i = 0; i < noteList.Count; i++)
@@ -257,5 +266,10 @@ public class EditorManager : MonoBehaviour
             notes.Add(note);
         }
         dataManager.FileSave(notes);
+    }
+
+    public void Quit()
+    {
+        UnityEngine.Application.Quit();
     }
 }

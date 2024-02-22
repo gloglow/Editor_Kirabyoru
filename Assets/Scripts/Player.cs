@@ -5,26 +5,30 @@ using UnityEngine.EventSystems;
 
 public class Player : MonoBehaviour
 {
-    public EditorManager editorManager;
+    // managers
+    [SerializeField] private EditorManager editorManager;
     [SerializeField] private ObjectPoolManager poolManager;
     [SerializeField] private UIManager uiManager;
-    public AudioManager audioManager;
-    [SerializeField] private int beatCnt; // counting beat.
-    private float startTime; // start timing of audio system. 
-    private float lastBeatTime; // timing of last beat.
-    int index;
-    public bool isPause;
-    [SerializeField] private Vector3 defaultCameraPos;
+    [SerializeField] private AudioManager audioManager;
 
     public float bpm; // music bpm.
     [SerializeField] private int musicStartAfterBeats; // the number of initial beats. set 8.
-
     public float secondPerBeat; // second per beat. calculated by bpm.
-    public float spawnYPos;
-    public int crtIndex;
+    [SerializeField] private int beatCnt; // counting beat.
+                                          // 
+    private float startTime; // start timing of audio system. 
+    private float lastBeatTime; // timing of last beat.
+
+    private bool flagPlay;
+    private bool isPause;
     private float pauseTimer; // save the time when pause button is pressed.
-    EditorNote editorNote;
-    bool flagPlay;
+
+    [SerializeField] private float spawnYPos; // note spawn position. set 4.
+    private int crtIndex;
+    private int index;
+    [SerializeField] private Vector3 defaultCameraPos; // default camera position. set (0, -2, -10)
+
+    private EditorNote editorNote;
 
     private void Start()
     {
@@ -72,19 +76,22 @@ public class Player : MonoBehaviour
                 }
 
                 // there is any note data && current beat == note beat, make note.
-                while (editorManager.noteList.Count > index && (beatCnt - musicStartAfterBeats + 2) == (int)editorManager.noteList[index].beat)
+                while (editorManager.noteList.Count > index && (beatCnt - musicStartAfterBeats + 2) == (editorManager.noteList[index].bar - 1) * 4 + (int)editorManager.noteList[index].beat)
                 {
                     editorNote = editorManager.noteList[index];
                     float f; // the waiting time of note. (if note is 1/4 note, not wait.)
-                    if (editorNote.beat == (beatCnt - musicStartAfterBeats + 1)) // 1/4 note.
+                    float SubBeatCheck = beatCnt - musicStartAfterBeats + 1;
+                    SubBeatCheck -= (int)SubBeatCheck;
+                    if (editorNote.beat == SubBeatCheck) // 1/4 note.
                     {
                         f = 0;
                     }
                     else // 1/8 note, 1/16 note, etc
                     {
                         // if beat of a note is 6.5, at 6th beat, wait 0.5beat time and be made.
-                        f = (editorNote.beat - (beatCnt - musicStartAfterBeats + 1)) * secondPerBeat * 0.5f;
+                        f = (editorNote.beat - SubBeatCheck) * secondPerBeat * 0.5f;
                     }
+                    Debug.Log(f);
                     StartCoroutine(MakeNote(f, index));
                     index++;
                 }
@@ -173,17 +180,25 @@ public class Player : MonoBehaviour
         {
             return;
         }
+
         editorManager.FlagPlayChange(false);
+
         flagPlay = false;
         isPause = true;
+
         crtIndex = 0;
         index = 0;
         beatCnt = 0;
+
         for (int i=0; i<transform.childCount; i++)
         {
-            Note note = transform.GetChild(i).GetComponent<Note>();
-            note.Exit();
+            if (transform.GetChild(i).gameObject.activeSelf)
+            {
+                Note note = transform.GetChild(i).GetComponent<Note>();
+                note.Exit();
+            }
         }
+
         audioManager.MusicStop();
         uiManager.OnPauseBtn();
         editorManager.BarControl(true);

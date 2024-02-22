@@ -58,8 +58,6 @@ public class Note : MonoBehaviour
         }
     }
 
-    
-
     public void Exit()
     {
         // set note status 0 and return to note object pool.

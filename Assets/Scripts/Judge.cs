@@ -8,7 +8,7 @@ public class Judge : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         // when collide with note
-        if (other.gameObject.layer == 8) // layer of note
+        if (other.gameObject.layer == 9) // layer of note
         {
             Note note = other.transform.GetComponent<Note>();
             note.Exit();

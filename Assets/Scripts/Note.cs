@@ -12,11 +12,11 @@ public class Note : MonoBehaviour
     public float initialTime; // time when note is activated
     private Vector3 destination; // on judge line.
     private float dist; // distance between initial position and destination.
-    public float index;
     private float speed;
 
-    public EditorManager editorManager;
+    public Player player;
     public int status; // 0 : idle, 1 : set destination and speed, 2 : move
+    public int index;
 
     private void Update()
     {
@@ -24,7 +24,6 @@ public class Note : MonoBehaviour
         {
             case 0:
                 break;
-
             case 1: // when activated by stage manager
                 speed = 1;
                 initialPos = transform.position; // initial position (position of spawner)
@@ -44,7 +43,7 @@ public class Note : MonoBehaviour
 
                 // speed = (current time / beat) * distance.
                 // -> time taken for move initial position to destination is ONE BEAT. 
-                float defaultSpeed = (((float)AudioSettings.dspTime - initialTime) / (editorManager.secondPerBeat * (1 / speed * 2)) * dist);
+                float defaultSpeed = (((float)AudioSettings.dspTime - initialTime) / (player.secondPerBeat * (1 / speed * 2)) * dist);
 
                 // position = initial position + direction * speed * useroffset
                 transform.position = initialPos + dirVec * defaultSpeed;
@@ -53,11 +52,13 @@ public class Note : MonoBehaviour
 
             case 2:
                 // moving mechanism is same.
-                defaultSpeed = (((float)AudioSettings.dspTime - initialTime) / (editorManager.secondPerBeat * (1 / speed * 2))) * dist;
+                defaultSpeed = (((float)AudioSettings.dspTime - initialTime) / (player.secondPerBeat * (1 / speed * 2))) * dist;
                 transform.position = initialPos + dirVec * defaultSpeed;
                 break;
         }
     }
+
+    
 
     public void Exit()
     {

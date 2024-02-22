@@ -6,19 +6,17 @@ using UnityEngine;
 using LitJson;
 using Ookii.Dialogs;
 using System.Text.RegularExpressions;
-using UnityEditor.Experimental.GraphView;
-using System.Runtime.InteropServices.WindowsRuntime;
 
 public class DataManager : MonoBehaviour
 {
+    // managers
     [SerializeField] private EditorManager editorManager;
     [SerializeField] private UIManager uiManager;
-    [SerializeField] private GameObject prefab_EditorNote;
-    private string noteDataFilePath = UnityEngine.Application.streamingAssetsPath;
 
-    VistaOpenFileDialog openDialog;
-    VistaSaveFileDialog saveDialog;
-    Stream openStream = null;
+    // for open files
+    private VistaOpenFileDialog openDialog;
+    private VistaSaveFileDialog saveDialog;
+    private Stream openStream = null;
 
     private void Start()
     {
@@ -26,26 +24,31 @@ public class DataManager : MonoBehaviour
         saveDialog = new VistaSaveFileDialog();
     }
 
-    public string MusicFileSelect()
+    public string MusicFileSelect() // select file and return its address
     {
+        // open file selecting screen
         openDialog.Filter = "wav files (*.wav)|*.wav|mp3 files (*.mp3)|*.mp3";
         openDialog.FilterIndex = 2;
         openDialog.Title = "Music File Dialog";
         string fileAddress = FileOpen();
+
+        // file address -> file name
         Regex regex = new Regex(@"\..*$");
         uiManager.ChangeSongText(regex.Replace(Path.GetFileName(fileAddress), ""));
+        
         return fileAddress;
     }
 
-    public string JsonFileSelect()
+    private string JsonFileSelect() // select file and return its address
     {
+        // open file selecting screen
         openDialog.Filter = "json files (*.json)|*.json";
         openDialog.FilterIndex = 1;
         openDialog.Title = "json File Dialog";
         return FileOpen();
     }
 
-    private string FileOpen()
+    private string FileOpen() // open file dialog
     {
         if (openDialog.ShowDialog() == DialogResult.OK)
         {
@@ -57,7 +60,7 @@ public class DataManager : MonoBehaviour
         return null;
     }
 
-    public void FileSave(List<NoteData> noteList)
+    public void FileSave(List<NoteData> noteList) // get noteList and transform to json file.
     {
         JsonData jsondata = JsonMapper.ToJson(noteList);
 
@@ -70,19 +73,24 @@ public class DataManager : MonoBehaviour
         }
     }
     
-    public void SheetSelect()
+    public void SheetSelect() // if load button pressed, call this method
     {
         LoadSheetFile(JsonFileSelect());
     }
 
-    public void LoadSheetFile(string fileAddress) // Load JSON file having Note information.
+    private void LoadSheetFile(string fileAddress) // Load JSON file having Note information.
     {
         if (File.Exists(fileAddress))
         {
+            // load json file.
             var fileText = File.ReadAllText(fileAddress);
             JsonData jData = JsonMapper.ToObject(fileText.ToString());
+            
+            // initialize setting.
             editorManager.Initialize();
             uiManager.InitiallizeNoteInfo();
+            
+            // add notes from json data.
             for (int i = 0; i < jData.Count; i++)
             {
                 float xPos = float.Parse(jData[i]["xPos"].ToString());
@@ -95,7 +103,7 @@ public class DataManager : MonoBehaviour
         }
         else
         {
-            // failed to load file.
+            return;
         }
     }
     

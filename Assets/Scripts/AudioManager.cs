@@ -1,19 +1,23 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.IO;
 using UnityEngine.Networking;
 
 public class AudioManager : MonoBehaviour
 {
     // manage audio play and stop
-    public AudioSource audioSource;
-    public UIManager uiManager;
-    public DataManager dataManager;
+    private AudioSource audioSource;
+    [SerializeField] private UIManager uiManager;
+    [SerializeField] private DataManager dataManager;
 
     private void Start()
     {
         audioSource = GetComponent<AudioSource>();
+    }
+
+    public bool IsMusicPlaying()
+    {
+        return audioSource.isPlaying;
     }
 
     public void MusicSelect()
@@ -21,7 +25,7 @@ public class AudioManager : MonoBehaviour
         StartCoroutine(ChangeMusic(dataManager.MusicFileSelect()));
     }
 
-    public IEnumerator ChangeMusic(string fileAddress)
+    private IEnumerator ChangeMusic(string fileAddress)
     {
         //change music and play. (if fail to find music, music stop.)
         using(UnityWebRequest www = 
@@ -41,14 +45,22 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    public void MusicPlay()
+    public bool MusicPlay()
     {
+        if (audioSource == null)
+            return false;
         audioSource.Play();
+        return true;
     }
 
     public void MusicPause()
     {
         audioSource.Pause();
+    }
+
+    public void MusicResume()
+    {
+        audioSource.UnPause();
     }
 
     public void MusicStop()

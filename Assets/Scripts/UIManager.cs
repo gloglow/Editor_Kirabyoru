@@ -4,32 +4,57 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.IO;
 using TMPro;
+using System;
+using System.Windows.Forms;
 
 public class UIManager : MonoBehaviour
 {
-    public EditorManager editorManager;
-    public GameObject defaultUI;
-    public GameObject menuUI;
-    public GameObject optionUI;
-    public TextMeshProUGUI songText;
+    [SerializeField] private EditorManager editorManager;
+    [SerializeField] private Player player;
+
+    // UI set
+    [SerializeField] private GameObject defaultUI;
+    [SerializeField] private GameObject menuUI;
+    [SerializeField] private GameObject optionUI;
+
+    // Button
+    [SerializeField] private GameObject pauseBtn;
+    [SerializeField] private GameObject resumeBtn;
+
+    // note info UI
     [SerializeField] private TMP_InputField barInput;
     [SerializeField] private TMP_InputField beatInput;
     [SerializeField] private TMP_InputField xPosInput;
     [SerializeField] private TMP_InputField unitVecXInput;
     [SerializeField] private TMP_InputField unitVecYInput;
+
+    // menu UI
+    [SerializeField] private TextMeshProUGUI songText;
+
+    // option UI
     [SerializeField] private TMP_InputField bpmInput;
+
+    // for make, modify note.
+    [SerializeField] private float minXpos;
+    [SerializeField] private float maxXpos;
+    private float tmpXPos;
+    private int tmpBar;
+    private float tmpBeat;
+    private float tmpUnitVecX;
+    private float tmpUnitVecY;
 
     private void Start()
     {
         InitiallizeNoteInfo();
         ChangeOption();
     }
-    public void ChangeSongText(string text)
+
+    public void ChangeSongText(string text) // when music selected.
     {
         songText.text = text;
     }
-    
-    public void InitiallizeNoteInfo()
+
+    public void InitiallizeNoteInfo() // initialize note info UI.
     {
         barInput.text = string.Empty;
         beatInput.text = string.Empty;
@@ -38,36 +63,84 @@ public class UIManager : MonoBehaviour
         unitVecYInput.text = string.Empty;
     }
 
-    public void ShowNoteInfo(Vector2 barBeat, float xPos, float unitVecX, float unitVecY)
+    public void ShowNoteInfo(EditorNote editorNote) // when note selected.
     {
-        barInput.text = barBeat.x.ToString();
-        beatInput.text = barBeat.y.ToString();
-        xPosInput.text = xPos.ToString();
-        unitVecXInput.text = unitVecX.ToString();
-        unitVecYInput.text = unitVecY.ToString();
+        barInput.text = editorNote.bar.ToString();
+        beatInput.text = editorNote.beat.ToString();
+        xPosInput.text = editorNote.xPos.ToString();
+        unitVecXInput.text = editorNote.unitVecX.ToString();
+        unitVecYInput.text = editorNote.unitVecY.ToString();
     }
 
-    public void MakeNote()
+    private bool CheckValidNoteInput() // if note info input is valid, return true.
     {
-        editorManager.AddNote(float.Parse(xPosInput.text), int.Parse(barInput.text), float.Parse(beatInput.text), float.Parse(unitVecXInput.text), float.Parse(unitVecYInput.text));
-    }
-
-    public void ModifyNoteInfo()
-    {
-        float xPos = float.Parse(xPosInput.text);
-        if(Mathf.Abs(xPos) > 5)
+        // if cant parse, system throw exception.
+        // if not in valid range, throw exception.
+        try
         {
-            xPos = xPos > 0 ? 5 : -5;
+            // minXpos < xPos < maxXpos
+            tmpXPos = float.Parse(xPosInput.text);
+            if(tmpXPos < minXpos || tmpXPos > maxXpos)
+                throw new Exception();
+
+            // bar : 1 ~
+            tmpBar = int.Parse(barInput.text);
+            if (tmpBar < 1)
+                throw new Exception();
+
+            // beat : 1, 1.25, 1.5, ~ 4.25, 4.5, 4.75
+            tmpBeat = float.Parse(beatInput.text);
+            if ((tmpBeat < 1 && tmpBeat < 5) || tmpBeat * 100 % 25 != 0)
+                throw new Exception();
+
+            tmpUnitVecX = float.Parse(unitVecXInput.text);
+            tmpUnitVecY = float.Parse(unitVecYInput.text);
         }
-        float unitVecX = float.Parse(unitVecXInput.text);
-        float unitVecY = float.Parse(unitVecYInput.text);
-        editorManager.ModifyNote(new Vector3(xPos, unitVecX, unitVecY));
+        // if there is exception, open alert box.
+        catch (Exception exception)
+        {
+            MessageBox.Show("Unvalid Input.\n" +
+                "1. -9 < xpos < 9\n" +
+                "2. 1 <= bar \n" +
+                "3. 1 <= beat < 5 , beat = x.25 or x.50 or x.75");
+            return false;
+        }
+        return true;
     }
 
-    public void ChangeOption()
+    public void MakeNote() // when note make button pressed.
     {
-        editorManager.bpm = int.Parse(bpmInput.text);
-        editorManager.secondPerBeat = 60 / editorManager.bpm;
+        if(CheckValidNoteInput())
+            editorManager.AddNote(tmpXPos, tmpBar, tmpBeat, tmpUnitVecX, tmpUnitVecY);
+    }
+
+    public void ModifyNoteInfo() // when note modify button pressed.
+    {
+        if(CheckValidNoteInput())
+            editorManager.ModifyNote(tmpXPos, tmpBar, tmpBeat, tmpUnitVecX, tmpUnitVecY);
+    }
+
+    public void DeleteNote() // when note delete button pressed.
+    {
+        editorManager.DeleteNote();
+    }
+
+    public void ChangeOption() // option change.
+    {
+        player.bpm = int.Parse(bpmInput.text);
+        player.secondPerBeat = 60 / player.bpm;
+    }
+
+    public void OnPauseBtn()
+    {
+        pauseBtn.gameObject.SetActive(true);
+        resumeBtn.gameObject.SetActive(false);
+    }
+
+    public void OnResumeBtn()
+    {
+        pauseBtn.gameObject.SetActive(false);
+        resumeBtn.gameObject.SetActive(true);
     }
 
     public void BackToDefault()

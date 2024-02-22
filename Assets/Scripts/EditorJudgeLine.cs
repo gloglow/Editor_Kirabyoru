@@ -6,46 +6,49 @@ public class EditorJudgeLine : MonoBehaviour
 
     // values for draw line
     [SerializeField] private Vector2 idealScreenSize; // Resolution Reference : 1920 x 1080.
-    [SerializeField] private int lineRendererPosCnt;
-    public  Vector3 lineStartPos, lineEndPos;
-    [SerializeField] private float lineOffset;
+    [SerializeField] private int lineRendererPosCnt; // the number of dots of line. set 25.
+    private Vector3 lineStartPos, lineEndPos; 
+    [SerializeField] private float lineOffset; // decide shape of line. set 2.
+    [SerializeField] private float lineYPos; // line position. set -3.
 
     private LineRenderer lineRenderer;
-    public CameraResolution cameraResolution;
+    [SerializeField] private CameraResolution cameraResolution;
 
     [SerializeField] private GameObject part; // object what actually check note
-    [SerializeField] private float partWidth; // width of object. best is 0.03.
+    [SerializeField] private float partWidth; // width of object. set 0.03.
 
     private void Start()
     {
         lineRenderer = GetComponent<LineRenderer>();
 
-        ReadyToDrawLine();
-        GetLinePoint();
+        SetLineStartEndPos();
+        MakeLinePoints();
+        DrawLine();
     }
 
-    private void ReadyToDrawLine()
+    private void SetLineStartEndPos() // calculate line start and end pos.
     {
         Vector2 lineScreenStartPos;
-        float screenResolution = 16f / 9f;
-        float lineHeightPos = 1f;
+        float screenResolution = idealScreenSize.x / idealScreenSize.y;
+
         if (cameraResolution.scaleHeight < 1) // wide height
         {
-            lineScreenStartPos = new Vector2(0, Screen.height * 0.5f + Screen.width * (1 / screenResolution) * 0.5f * lineHeightPos);
+            lineScreenStartPos = new Vector2(0, Screen.height * 0.5f + Screen.width * (1 / screenResolution) * 0.5f);
         }
         else // wide width
         {
             float tmp = Screen.height * screenResolution * 0.5f;
-            lineScreenStartPos = new Vector2(Screen.width * 0.5f + tmp, Screen.height * lineHeightPos);
+            lineScreenStartPos = new Vector2(Screen.width * 0.5f + tmp, Screen.height);
         }
+
         // To make ideal line for every resolution
-        lineStartPos = Camera.main.ScreenToWorldPoint(lineScreenStartPos) + new Vector3(0, -3, 0);
+        lineStartPos = Camera.main.ScreenToWorldPoint(lineScreenStartPos) + new Vector3(0, lineYPos, 0);
         lineEndPos = new Vector3(lineStartPos.x * (-1), lineStartPos.y);
         lineStartPos.z = 0;
         lineEndPos.z = 0;
     }
 
-    private void GetLinePoint()
+    private void MakeLinePoints()
     {
         // variables for drawing line
         Vector3 stPos, edPos, center;
@@ -63,11 +66,9 @@ public class EditorJudgeLine : MonoBehaviour
             point += center;
             lineRenderer.SetPosition(i, point);
         }
-
-        Draw(); // draw real judge line and destroy line.
     }
 
-    public void Draw()
+    private void DrawLine()
     {
         // initialize size of part object.
         float length = Vector3.Distance(lineRenderer.GetPosition(0), lineRenderer.GetPosition(1)); // length = distance between two points of line renderer.
@@ -85,12 +86,5 @@ public class EditorJudgeLine : MonoBehaviour
             judgePart.transform.rotation = Quaternion.LookRotation(dirVec);
             judgePart.transform.Rotate(new Vector3(90, 0, 0));
         }
-    }
-
-    public Vector3[] GetLinePoints() // get line points for draw toucharea.
-    {
-        Vector3[] arr = new Vector3[lineRendererPosCnt];
-        int tmp = lineRenderer.GetPositions(arr);
-        return arr;
     }
 }

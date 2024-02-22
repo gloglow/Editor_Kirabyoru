@@ -63,14 +63,15 @@
     <Compile Include="Assets\LitJson\IJsonWrapper.cs" />
     <Compile Include="Assets\Scripts\ObjectPoolManager.cs" />
     <Compile Include="Assets\LitJson\JsonMockWrapper.cs" />
-    <Compile Include="Assets\Scripts\SongData.cs" />
     <Compile Include="Assets\LitJson\Lexer.cs" />
     <Compile Include="Assets\LitJson\JsonException.cs" />
+    <Compile Include="Assets\Scripts\Judge.cs" />
     <Compile Include="Assets\Scripts\EditorManager.cs" />
     <Compile Include="Assets\LitJson\Netstandard15Polyfill.cs" />
     <Compile Include="Assets\LitJson\JsonMapper.cs" />
     <Compile Include="Assets\LitJson\ParserToken.cs" />
     <Compile Include="Assets\Scripts\EditorJudgeLine.cs" />
+    <Compile Include="Assets\Scripts\Player.cs" />
     <Compile Include="Assets\Scripts\EditorNote.cs" />
     <Compile Include="Assets\LitJson\JsonData.cs" />
     <Compile Include="Assets\Scripts\Note.cs" />

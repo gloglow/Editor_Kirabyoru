@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,19 +14,20 @@ public class UIManager : MonoBehaviour
 
     // UI set
     [SerializeField] private GameObject defaultUI;
-    [SerializeField] private GameObject menuUI;
     [SerializeField] private GameObject optionUI;
 
     // Button
+    [SerializeField] private Image imageNoteModifyBtn;
+    private bool modifyOnOff = false;
     [SerializeField] private GameObject pauseBtn;
     [SerializeField] private GameObject resumeBtn;
 
     // note info UI
-    [SerializeField] private TMP_InputField barInput;
-    [SerializeField] private TMP_InputField beatInput;
-    [SerializeField] private TMP_InputField xPosInput;
-    [SerializeField] private TMP_InputField unitVecXInput;
-    [SerializeField] private TMP_InputField unitVecYInput;
+    [SerializeField] private GameObject noteInfo;
+    [SerializeField] private TextMeshProUGUI barBeatText;
+    [SerializeField] private TextMeshProUGUI xPosText;
+    [SerializeField] private TextMeshProUGUI unitVecXText;
+    [SerializeField] private TextMeshProUGUI unitVecYText;
 
     // menu UI
     [SerializeField] private TextMeshProUGUI songText;
@@ -49,6 +50,19 @@ public class UIManager : MonoBehaviour
         ChangeOption();
     }
 
+    public void ChangeNoteModifySwitch()
+    {
+        if (!modifyOnOff)
+        {
+            imageNoteModifyBtn.color = Color.red;
+        }
+        else
+        {
+            imageNoteModifyBtn.color = Color.white;
+        }
+        editorManager.ChangeModifyNoteMode();
+    }
+
     public void ChangeSongText(string text) // when music selected.
     {
         songText.text = text;
@@ -56,20 +70,24 @@ public class UIManager : MonoBehaviour
 
     public void InitiallizeNoteInfo() // initialize note info UI.
     {
-        barInput.text = string.Empty;
-        beatInput.text = string.Empty;
-        xPosInput.text = string.Empty;
-        unitVecXInput.text = string.Empty;
-        unitVecYInput.text = string.Empty;
+        barBeatText.text = string.Empty;
+        xPosText.text = string.Empty;
+        unitVecXText.text = string.Empty;
+        unitVecYText.text = string.Empty;
     }
 
-    public void ShowNoteInfo(EditorNote editorNote) // when note selected.
+    public void ShowNoteInfo(EditorNote editorNote) // ノーツがクリックされた時
     {
-        barInput.text = editorNote.bar.ToString();
-        beatInput.text = editorNote.beat.ToString();
-        xPosInput.text = editorNote.xPos.ToString();
-        unitVecXInput.text = editorNote.unitVecX.ToString();
-        unitVecYInput.text = editorNote.unitVecY.ToString();
+        noteInfo.gameObject.SetActive(true);
+        barBeatText.text = editorNote.bar.ToString() + " - " + editorNote.beat.ToString();
+        xPosText.text = editorNote.xPos.ToString();
+        unitVecXText.text = editorNote.unitVecX.ToString();
+        unitVecYText.text = editorNote.unitVecY.ToString();
+    }
+
+    public void HideNoteInfo()
+    {
+        noteInfo.gameObject.SetActive(false);
     }
 
     private bool CheckValidNoteInput() // if note info input is valid, return true.
@@ -79,22 +97,22 @@ public class UIManager : MonoBehaviour
         try
         {
             // minXpos < xPos < maxXpos
-            tmpXPos = float.Parse(xPosInput.text);
+            tmpXPos = float.Parse(xPosText.text);
             if(tmpXPos < minXpos || tmpXPos > maxXpos)
                 throw new Exception();
 
             // bar : 1 ~
-            tmpBar = int.Parse(barInput.text);
+            tmpBar = int.Parse(barBeatText.text);
             if (tmpBar < 1)
                 throw new Exception();
 
             // beat : 1, 1.25, 1.5, ~ 4.25, 4.5, 4.75
-            tmpBeat = float.Parse(beatInput.text);
+            tmpBeat = float.Parse(barBeatText.text);
             if ((tmpBeat < 1 && tmpBeat < 5) || tmpBeat * 100 % 25 != 0)
                 throw new Exception();
 
-            tmpUnitVecX = float.Parse(unitVecXInput.text);
-            tmpUnitVecY = float.Parse(unitVecYInput.text);
+            tmpUnitVecX = float.Parse(unitVecXText.text);
+            tmpUnitVecY = float.Parse(unitVecYText.text);
         }
         // if there is exception, open alert box.
         catch (Exception exception)
@@ -146,28 +164,24 @@ public class UIManager : MonoBehaviour
     public void BackToDefault()
     {
         defaultUI.SetActive(true);
-        menuUI.SetActive(false);
         optionUI.SetActive(false);
     }
 
     public void OnMenu()
     {
         defaultUI.SetActive(false);
-        menuUI.SetActive(true);
         optionUI.SetActive(false);
     }
 
     public void OnOption()
     {
         defaultUI.SetActive(false);
-        menuUI.SetActive(false);
         optionUI.SetActive(true);
     }
 
     public void NoteMakeMode()
     {
         defaultUI.SetActive(false);
-        menuUI.SetActive(false);
         optionUI.SetActive(false);
     }
 }

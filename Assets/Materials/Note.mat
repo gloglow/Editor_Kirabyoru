@@ -114,7 +114,7 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _ClipRect: {r: -32767, g: -32767, b: 32767, a: 32767}
-    - _Color: {r: 0.43933785, g: 0.76805496, b: 0.8113208, a: 0.52156866}
+    - _Color: {r: 0, g: 0, b: 1, a: 0.52156866}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _Flip: {r: 1, g: 1, b: 1, a: 1}
     - _HueVariationColor: {r: 1, g: 0.5, b: 0, a: 0.1}

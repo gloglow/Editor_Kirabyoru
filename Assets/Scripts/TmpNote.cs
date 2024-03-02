@@ -50,6 +50,7 @@ public class TmpNote : MonoBehaviour
         if (Input.GetMouseButton(0))
         {
             float mouseX = Camera.main.ScreenToWorldPoint(Input.mousePosition).x;
+            mouseX = Mathf.RoundToInt(mouseX);
             transform.position = new Vector3(mouseX, spawnYPos, 0);
         }
         if (Input.GetMouseButtonUp(0))
@@ -68,6 +69,7 @@ public class TmpNote : MonoBehaviour
             mousePos = new Vector3(mousePos.x, mousePos.y, 0);
             dirVec = mousePos - transform.position;
             dirVec.Normalize();
+            dirVec = new Vector3(OnlyTenthPlaceValue(dirVec.x), OnlyTenthPlaceValue(dirVec.y), 0);
 
             int layerMask = (1 << 7); // layer of judgeline
             RaycastHit rayHit;
@@ -83,5 +85,10 @@ public class TmpNote : MonoBehaviour
 
             gameObject.SetActive(false);
         }
+    }
+    
+    private float OnlyTenthPlaceValue(float f)
+    {
+        return Mathf.Floor(f * 10f) / 10f;
     }
 }

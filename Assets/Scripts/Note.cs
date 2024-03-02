@@ -27,7 +27,6 @@ public class Note : MonoBehaviour
             case 1: // when activated by stage manager
                 speed = 1;
                 initialPos = transform.position; // initial position (position of spawner)
-                initialTime = (float)AudioSettings.dspTime; // activated timing
 
                 RaycastHit rayHit;
                 int layerMask = (1 << 7); // layer of real judge line
@@ -43,7 +42,7 @@ public class Note : MonoBehaviour
 
                 // speed = (current time / beat) * distance.
                 // -> time taken for move initial position to destination is ONE BEAT. 
-                float defaultSpeed = (((float)AudioSettings.dspTime - initialTime) / (player.secondPerBeat * (1 / speed * 2)) * dist);
+                float defaultSpeed = (((float)AudioSettings.dspTime - initialTime) / (player.secondPerBeat * 2)) * dist;
 
                 // position = initial position + direction * speed * useroffset
                 transform.position = initialPos + dirVec * defaultSpeed;
@@ -52,7 +51,7 @@ public class Note : MonoBehaviour
 
             case 2:
                 // moving mechanism is same.
-                defaultSpeed = (((float)AudioSettings.dspTime - initialTime) / (player.secondPerBeat * (1 / speed * 2))) * dist;
+                defaultSpeed = (((float)AudioSettings.dspTime - initialTime) / (player.secondPerBeat * 2)) * dist;
                 transform.position = initialPos + dirVec * defaultSpeed;
                 break;
         }

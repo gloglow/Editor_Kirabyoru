@@ -30,6 +30,8 @@ public class Player : MonoBehaviour
 
     private EditorNote editorNote;
 
+    public int off;
+
     private void Start()
     {
         flagPlay = false;
@@ -76,20 +78,19 @@ public class Player : MonoBehaviour
                 }
 
                 // there is any note data && current beat == note beat, make note.
-                while (editorManager.noteList.Count > index && (beatCnt - musicStartAfterBeats + 2) == (editorManager.noteList[index].bar - 1) * 4 + (int)editorManager.noteList[index].beat)
+                while (editorManager.noteList.Count > index &&
+                    (beatCnt - musicStartAfterBeats +2) == (editorManager.noteList[index].bar - 1) * 4 + (int)editorManager.noteList[index].beat)
                 {
                     editorNote = editorManager.noteList[index];
                     float f; // the waiting time of note. (if note is 1/4 note, not wait.)
-                    float SubBeatCheck = beatCnt - musicStartAfterBeats + 1;
-                    SubBeatCheck -= (int)SubBeatCheck;
-                    if (editorNote.beat == SubBeatCheck) // 1/4 note.
+                    if (editorNote.beat == 1) // 1/4 note.
                     {
                         f = 0;
                     }
                     else // 1/8 note, 1/16 note, etc
                     {
                         // if beat of a note is 6.5, at 6th beat, wait 0.5beat time and be made.
-                        f = (editorNote.beat - SubBeatCheck) * secondPerBeat * 0.5f;
+                        f = (editorNote.beat - (int)editorNote.beat) * secondPerBeat * 0.5f;
                     }
                     Debug.Log(f);
                     StartCoroutine(MakeNote(f, index));

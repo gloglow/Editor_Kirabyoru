@@ -17,6 +17,8 @@ public class TmpNote : MonoBehaviour
     private Vector3 startPos;
     [SerializeField] private float spawnYPos;
 
+    public bool flagMake;
+
     private void Start()
     {
         lineRenderer = GetComponent<LineRenderer>();
@@ -35,14 +37,22 @@ public class TmpNote : MonoBehaviour
             case 2: // decide direction vector
                 DecideDirection();
                 break;
+            case 3: // 
+                DecideDirection();
+                break;
         }
     }
 
     private void Initialize()
     {
+        //lineRenderer.enabled = false;
         lineRenderer.SetPosition(0, Vector3.zero);
         lineRenderer.SetPosition(1, Vector3.zero);
-        status = 1;
+
+        if (flagMake)
+            status = 1;
+        else
+            status = 2;
     }
 
     private void DecideXPos()
@@ -56,13 +66,14 @@ public class TmpNote : MonoBehaviour
         if (Input.GetMouseButtonUp(0))
         {
             xPos = transform.position.x;
-            startPos = transform.position;
+            //startPos = transform.position;
             status = 2;
         }
     }
 
     private void DecideDirection()
     {
+        startPos = transform.position;
         if (Input.GetMouseButton(0))
         {
             Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -81,8 +92,11 @@ public class TmpNote : MonoBehaviour
         }
         if (Input.GetMouseButtonUp(0))
         {
-            editorManager.AddNote(xPos, bar, beat, dirVec.x, dirVec.y);
-
+            if (flagMake)
+                editorManager.AddNote(xPos, bar, beat, dirVec.x, dirVec.y);
+            else
+                editorManager.ModifyNoteDir(dirVec.x, dirVec.y);
+            editorManager.status = 2;
             gameObject.SetActive(false);
         }
     }

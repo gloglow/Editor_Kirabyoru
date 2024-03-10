@@ -11,7 +11,7 @@ public class Judge : MonoBehaviour
         if (other.gameObject.layer == 9) // layer of note
         {
             Note note = other.transform.GetComponent<Note>();
-            note.Exit();
+            //note.Exit();
         }
     }
 }

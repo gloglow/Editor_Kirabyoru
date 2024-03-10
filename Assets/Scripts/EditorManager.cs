@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Windows.Forms;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -33,62 +32,100 @@ public class EditorManager : MonoBehaviour
     
     public int targetNoteIndex;
 
-    private bool noteModifyMode = false;
     private bool makeNoteMode = false;
     private bool playMode = false;
 
     [SerializeField] float scrollSpeed; // set 0.0002
 
+    public int status;
+    private GameObject rayHitObj;
+
 
     void Update()
     {
-        if(!makeNoteMode && !playMode)
+        switch (status)
         {
-            if (noteModifyMode)
-            {
-                if(targetNoteIndex != -1)
-                {
-                    
-                }
-            }
-            else
-            {
+            case 0: // 基本状態
                 ScreenDrag();
                 if ((Input.GetMouseButtonUp(0))
-                    && (EventSystem.current.IsPointerOverGameObject() == false))
+                && (EventSystem.current.IsPointerOverGameObject() == false))
                 {
                     if (Vector3.Distance(mousePos, Input.mousePosition) < 1)
                     {
-                        Ray ray = Camera.main.ScreenPointToRay(mousePos);
-                        RaycastHit rayHit;
-                        if (Physics.Raycast(ray, out rayHit, Mathf.Infinity))
+                        int rayHitLayer = LayerFromMouseRay();
+                        switch (rayHitLayer)
                         {
-                            int rayHitLayer = rayHit.transform.gameObject.layer;
-                            GameObject obj = rayHit.transform.gameObject;
-                            if (rayHitLayer == 6) // バーがクリックされた時
-                            {
-                                MakeNote(obj);
-                            }
-                            else if (rayHitLayer == 8) //　ノーツがクリックされた時
-                            {
-                                if (targetNoteIndex != -1)
-                                    UnSelectNote();
-                                SelectNote(FindNoteIndex(obj.GetComponent<EditorNote>()));
-                            }
-                        }
-                        else if (targetNoteIndex != -1)
-                        {
-                            UnSelectNote();
+                            case 6: // バー
+                                UnSelectNote();
+                                MakeNote(rayHitObj);
+                                status = 1;
+                                break;
+                            case 8: //　ノーツ
+                                SelectNote(FindNoteIndex(rayHitObj.GetComponent<EditorNote>()));
+                                status = 2;
+                                break;
+                            default:
+                                UnSelectNote();
+                                break;
                         }
                     }
                 }
-            }
+                break;
+            case 1: // バーがクリックされた時（ノーツを作る）
+
+                break;
+            case 2: // ノーツがクリックされた時
+                if (Input.GetMouseButtonDown(0) && (EventSystem.current.IsPointerOverGameObject() == false))
+                {
+                    if (LayerFromMouseRay() != 8)
+                    {
+                        UnSelectNote();
+                        mousePos = Input.mousePosition;
+                        status = 0;
+                        break;
+                    }
+                }
+                if (Input.GetMouseButton(0) && (EventSystem.current.IsPointerOverGameObject() == false))
+                {
+                    EditNotePos();
+                }
+                if (Input.GetMouseButtonUp(0))
+                {
+                    status = 0;
+                }
+                break;
         }
     }
 
-    public void ChangeModifyNoteMode()
+    public void EditNoteDirection()
     {
-        noteModifyMode = !noteModifyMode;
+        if (targetNoteIndex == -1)
+            return;
+        status = 1;
+        bars.gameObject.SetActive(false);
+        uiManager.NoteMakeMode();
+        memoryCameraPos = Camera.main.transform.position;
+        Camera.main.transform.position = new Vector3(0, 0, -10);
+
+        tmpNote.gameObject.SetActive(true);
+        tmpNote.transform.position = new Vector3(0, 4, 0);
+        tmpNote.transform.position = new Vector3(noteList[targetNoteIndex].xPos, tmpNote.transform.position.y, tmpNote.transform.position.z);
+        tmpNote.status = 0;
+        tmpNote.flagMake = false;
+        makeNoteMode = true;
+    }
+
+    private int LayerFromMouseRay()
+    {
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        RaycastHit rayHit;
+        int rayHitLayer = -1;
+        if (Physics.Raycast(ray, out rayHit, Mathf.Infinity))
+        {
+            rayHitLayer = rayHit.transform.gameObject.layer;
+            rayHitObj = rayHit.transform.gameObject;
+        }
+        return rayHitLayer;
     }
 
     private void MakeNote(GameObject rayHit)
@@ -104,6 +141,7 @@ public class EditorManager : MonoBehaviour
         tmpNote.beat = beatPart.beatNum;
         tmpNote.transform.position = new Vector3(0, 4, 0);
         tmpNote.status = 0;
+        tmpNote.flagMake = true;
         makeNoteMode = true;
     }
 
@@ -124,6 +162,10 @@ public class EditorManager : MonoBehaviour
 
     private void UnSelectNote()
     {
+        if(targetNoteIndex == -1)
+        {
+            return;
+        }
         MeshRenderer meshRenderer = noteList[targetNoteIndex].GetComponent<MeshRenderer>();
         meshRenderer.material.color = Color.blue;
         targetNoteIndex = -1;
@@ -139,6 +181,33 @@ public class EditorManager : MonoBehaviour
         }
         return -1;
     }
+
+    private void EditNotePos()
+    {
+        if (targetNoteIndex == -1)
+            return;
+        EditorNote editorNote = noteList[targetNoteIndex];
+        float xPos = Camera.main.ScreenToWorldPoint(Input.mousePosition).x;
+        xPos = Mathf.RoundToInt(xPos);
+        int bar = editorNote.bar;
+        float beat = editorNote.beat;
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        RaycastHit rayHit;
+        if (Physics.Raycast(ray, out rayHit, Mathf.Infinity))
+        {
+            int rayHitLayer = rayHit.transform.gameObject.layer;
+            GameObject obj = rayHit.transform.gameObject;
+            if (rayHitLayer == 6) // バーがクリックされた時
+            {
+                SubBeat subBeat = obj.GetComponent<SubBeat>();
+                bar = subBeat.barNum;
+                beat = subBeat.beatNum;
+            }
+        }
+        noteList[targetNoteIndex] = NoteSetting(editorNote, xPos, bar, beat, editorNote.unitVecX, editorNote.unitVecY);
+        uiManager.ShowNoteInfo(noteList[targetNoteIndex]);
+    }
+
 
     public void BarControl(bool flag) // play mode -> bar off, editor mode -> bar on
     {
@@ -212,15 +281,33 @@ public class EditorManager : MonoBehaviour
         GameObject obj = Instantiate(prefab_note);
         EditorNote editorNote = obj.GetComponent<EditorNote>();
         editorNote = NoteSetting(editorNote, xPos, bar, beat, unitVecX, unitVecY);
+        editorNote.arrow.transform.rotation = Quaternion.Euler(0, 0, unitVecX * 90f);
         noteList.Add(editorNote);
         noteList.Sort(NoteCompare);
-
-        SelectNote(FindNoteIndex(editorNote));
-
+        targetNoteIndex = FindNoteIndex(editorNote);
+        
+        if(targetNoteIndex != -1)
+        {
+            UnSelectNote();
+        }
         makeNoteMode = false;
         bars.gameObject.SetActive(true);
         uiManager.BackToDefault();
         Camera.main.transform.position = memoryCameraPos;
+        SelectNote(targetNoteIndex);
+        uiManager.ShowNoteInfo(editorNote);
+    }
+
+    public void ModifyNoteDir(float xVec, float yVec)
+    {
+        noteList[targetNoteIndex].unitVecX = xVec;
+        noteList[targetNoteIndex].unitVecY = yVec;
+        noteList[targetNoteIndex].arrow.transform.rotation = Quaternion.Euler(0, 0, xVec * 90f);
+        makeNoteMode = false;
+        bars.gameObject.SetActive(true);
+        uiManager.BackToDefault();
+        Camera.main.transform.position = memoryCameraPos;
+        uiManager.ShowNoteInfo(noteList[targetNoteIndex]);
     }
 
     private int NoteCompare(EditorNote note1, EditorNote note2) // sort notes by bar and beat.
@@ -277,7 +364,7 @@ public class EditorManager : MonoBehaviour
     {
         if (targetNoteIndex == -1)
             return;
-
+        uiManager.HideNoteInfo();
         DeleteNote(targetNoteIndex);
     }
 

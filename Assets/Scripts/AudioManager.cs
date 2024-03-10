@@ -22,7 +22,11 @@ public class AudioManager : MonoBehaviour
 
     public void MusicSelect()
     {
-        StartCoroutine(ChangeMusic(dataManager.MusicFileSelect()));
+        string fileAddress = dataManager.MusicFileSelect();
+        if(fileAddress != null )
+        {
+            StartCoroutine(ChangeMusic(fileAddress));
+        }
     }
 
     private IEnumerator ChangeMusic(string fileAddress)

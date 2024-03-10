@@ -50,19 +50,6 @@ public class UIManager : MonoBehaviour
         ChangeOption();
     }
 
-    public void ChangeNoteModifySwitch()
-    {
-        if (!modifyOnOff)
-        {
-            imageNoteModifyBtn.color = Color.red;
-        }
-        else
-        {
-            imageNoteModifyBtn.color = Color.white;
-        }
-        editorManager.ChangeModifyNoteMode();
-    }
-
     public void ChangeSongText(string text) // when music selected.
     {
         songText.text = text;
@@ -173,10 +160,14 @@ public class UIManager : MonoBehaviour
         optionUI.SetActive(false);
     }
 
-    public void OnOption()
+    public void OnOptionUI()
     {
-        defaultUI.SetActive(false);
         optionUI.SetActive(true);
+    }
+
+    public void OffOptionUI()
+    {
+        optionUI.SetActive(false);
     }
 
     public void NoteMakeMode()

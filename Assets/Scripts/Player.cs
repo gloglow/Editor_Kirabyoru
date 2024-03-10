@@ -31,7 +31,6 @@ public class Player : MonoBehaviour
     private EditorNote editorNote;
 
     public int off;
-
     private void Start()
     {
         flagPlay = false;
@@ -79,7 +78,7 @@ public class Player : MonoBehaviour
 
                 // there is any note data && current beat == note beat, make note.
                 while (editorManager.noteList.Count > index &&
-                    (beatCnt - musicStartAfterBeats +2) == (editorManager.noteList[index].bar - 1) * 4 + (int)editorManager.noteList[index].beat)
+                    (beatCnt - musicStartAfterBeats + 1) == (editorManager.noteList[index].bar - 1) * 4 + (int)editorManager.noteList[index].beat - 1)
                 {
                     editorNote = editorManager.noteList[index];
                     float f; // the waiting time of note. (if note is 1/4 note, not wait.)
@@ -92,7 +91,7 @@ public class Player : MonoBehaviour
                         // if beat of a note is 6.5, at 6th beat, wait 0.5beat time and be made.
                         f = (editorNote.beat - (int)editorNote.beat) * secondPerBeat * 0.5f;
                     }
-                    Debug.Log(f);
+                    
                     StartCoroutine(MakeNote(f, index));
                     index++;
                 }
@@ -109,7 +108,7 @@ public class Player : MonoBehaviour
         note.transform.parent = transform;
         note.player = this;
         note.index = nIndex;
-        note.initialTime = (float)AudioSettings.dspTime;
+        //note.initialTime = (float)AudioSettings.dspTime;
 
         EditorNote editorNote = editorManager.noteList[nIndex];
         // activate note.

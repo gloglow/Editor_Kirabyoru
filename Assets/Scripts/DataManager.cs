@@ -32,10 +32,12 @@ public class DataManager : MonoBehaviour
         openDialog.Title = "Music File Dialog";
         string fileAddress = FileOpen();
 
-        // file address -> file name
-        Regex regex = new Regex(@"\..*$");
-        uiManager.ChangeSongText(regex.Replace(Path.GetFileName(fileAddress), ""));
-        
+        if(fileAddress != null)
+        {
+            // file address -> file name
+            Regex regex = new Regex(@"\..*$");
+            uiManager.ChangeSongText(regex.Replace(Path.GetFileName(fileAddress), ""));
+        }
         return fileAddress;
     }
 

@@ -35,14 +35,8 @@ public class UIManager : MonoBehaviour
     // option UI
     [SerializeField] private TMP_InputField bpmInput;
 
-    // for make, modify note.
-    [SerializeField] private float minXpos;
-    [SerializeField] private float maxXpos;
-    private float tmpXPos;
-    private int tmpBar;
-    private float tmpBeat;
-    private float tmpUnitVecX;
-    private float tmpUnitVecY;
+    // help UI
+    [SerializeField] private GameObject helpUI;
 
     private void Start()
     {
@@ -77,57 +71,14 @@ public class UIManager : MonoBehaviour
         noteInfo.gameObject.SetActive(false);
     }
 
-    private bool CheckValidNoteInput() // if note info input is valid, return true.
+    public void OnHelpUI()
     {
-        // if cant parse, system throw exception.
-        // if not in valid range, throw exception.
-        try
-        {
-            // minXpos < xPos < maxXpos
-            tmpXPos = float.Parse(xPosText.text);
-            if(tmpXPos < minXpos || tmpXPos > maxXpos)
-                throw new Exception();
 
-            // bar : 1 ~
-            tmpBar = int.Parse(barBeatText.text);
-            if (tmpBar < 1)
-                throw new Exception();
-
-            // beat : 1, 1.25, 1.5, ~ 4.25, 4.5, 4.75
-            tmpBeat = float.Parse(barBeatText.text);
-            if ((tmpBeat < 1 && tmpBeat < 5) || tmpBeat * 100 % 25 != 0)
-                throw new Exception();
-
-            tmpUnitVecX = float.Parse(unitVecXText.text);
-            tmpUnitVecY = float.Parse(unitVecYText.text);
-        }
-        // if there is exception, open alert box.
-        catch (Exception exception)
-        {
-            MessageBox.Show("Unvalid Input.\n" +
-                "1. -9 < xpos < 9\n" +
-                "2. 1 <= bar \n" +
-                "3. 1 <= beat < 5 , beat = x.25 or x.50 or x.75");
-            return false;
-        }
-        return true;
     }
 
-    public void MakeNote() // when note make button pressed.
+    public void OffHelpUI()
     {
-        if(CheckValidNoteInput())
-            editorManager.AddNote(tmpXPos, tmpBar, tmpBeat, tmpUnitVecX, tmpUnitVecY);
-    }
 
-    public void ModifyNoteInfo() // when note modify button pressed.
-    {
-        if(CheckValidNoteInput())
-            editorManager.ModifyNote(tmpXPos, tmpBar, tmpBeat, tmpUnitVecX, tmpUnitVecY);
-    }
-
-    public void DeleteNote() // when note delete button pressed.
-    {
-        editorManager.DeleteNote();
     }
 
     public void ChangeOption() // option change.

@@ -122,6 +122,7 @@ public class Player : MonoBehaviour
     public void MusicPlay()
     {
         editorManager.FlagPlayChange(true);
+        editorManager.CameraPosMemory();
         Camera.main.transform.position = defaultCameraPos;
         flagPlay = true;
         lastBeatTime = (float)AudioSettings.dspTime;
@@ -137,6 +138,7 @@ public class Player : MonoBehaviour
         }
 
         isPause = true;
+        flagPlay = false;
         audioManager.MusicPause();
 
         // record the time when pause button is pressed.
@@ -176,13 +178,6 @@ public class Player : MonoBehaviour
 
     public void MusicStop()
     {
-        if (flagPlay == false)
-        {
-            return;
-        }
-
-        editorManager.FlagPlayChange(false);
-
         flagPlay = false;
         isPause = true;
 
@@ -190,17 +185,9 @@ public class Player : MonoBehaviour
         index = 0;
         beatCnt = 0;
 
-        for (int i=0; i<transform.childCount; i++)
-        {
-            if (transform.GetChild(i).gameObject.activeSelf)
-            {
-                Note note = transform.GetChild(i).GetComponent<Note>();
-                note.Exit();
-            }
-        }
+        editorManager.BackToEditorMode();
 
         audioManager.MusicStop();
         uiManager.OnPauseBtn();
-        editorManager.BarControl(true);
     }
 }

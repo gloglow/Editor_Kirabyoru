@@ -37,9 +37,6 @@ public class TmpNote : MonoBehaviour
             case 2: // decide direction vector
                 DecideDirection();
                 break;
-            case 3: // 
-                DecideDirection();
-                break;
         }
     }
 

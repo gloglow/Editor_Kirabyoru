@@ -46,7 +46,16 @@ public class EditorManager : MonoBehaviour
         switch (status)
         {
             case 0: // 基本状態
-                ScreenDrag();
+                
+                if (Input.GetMouseButtonDown(0))
+                {
+                    mousePos = Input.mousePosition;
+                }
+                if (!playMode && Input.GetMouseButton(0))
+                {
+                    Camera.main.transform.position += new Vector3(0, (mousePos.y - Input.mousePosition.y) * scrollSpeed, 0);
+                }
+                
                 if ((Input.GetMouseButtonUp(0))
                 && (EventSystem.current.IsPointerOverGameObject() == false))
                 {
@@ -60,9 +69,13 @@ public class EditorManager : MonoBehaviour
                                 MakeNote(rayHitObj);
                                 status = 1;
                                 break;
-                            case 8: //　ノーツ
+                            case 8: //　エディターノーツ
                                 SelectNote(FindNoteIndex(rayHitObj.GetComponent<EditorNote>()));
                                 status = 2;
+                                break;
+                            case 9: //　ノーツ
+                                Note note = rayHitObj.GetComponent<Note>();
+                                SelectNote(note.index);
                                 break;
                             default:
                                 UnSelectNote();
@@ -97,12 +110,36 @@ public class EditorManager : MonoBehaviour
         }
     }
 
+    public void CameraPosMemory()
+    {
+        memoryCameraPos = Camera.main.transform.position;
+    }
+
+    public void BackToEditorMode()
+    {
+        playMode = false;
+        BarControl(true);
+        for (int i = 0; i < transform.childCount; i++)
+        {
+            if (transform.GetChild(i).gameObject.activeSelf)
+            {
+                Note note = transform.GetChild(i).GetComponent<Note>();
+                note.Exit();
+            }
+        }
+        Camera.main.transform.position = memoryCameraPos;
+    }
+
     public void EditNoteDirection()
     {
         if (targetNoteIndex == -1)
             return;
+        if (playMode)
+        {
+            player.MusicStop();
+        }
         status = 1;
-        bars.gameObject.SetActive(false);
+        BarControl(false);
         uiManager.NoteMakeMode();
         memoryCameraPos = Camera.main.transform.position;
         Camera.main.transform.position = new Vector3(0, 0, -10);
@@ -125,6 +162,7 @@ public class EditorManager : MonoBehaviour
             rayHitLayer = rayHit.transform.gameObject.layer;
             rayHitObj = rayHit.transform.gameObject;
         }
+        Debug.Log(rayHitLayer);
         return rayHitLayer;
     }
 
@@ -305,8 +343,9 @@ public class EditorManager : MonoBehaviour
         noteList[targetNoteIndex].arrow.transform.rotation = Quaternion.Euler(0, 0, xVec * 90f);
         makeNoteMode = false;
         bars.gameObject.SetActive(true);
+        Camera.main.transform.position = new Vector3(0, noteList[targetNoteIndex].transform.position.y, -10);
+        
         uiManager.BackToDefault();
-        Camera.main.transform.position = memoryCameraPos;
         uiManager.ShowNoteInfo(noteList[targetNoteIndex]);
     }
 
@@ -362,6 +401,10 @@ public class EditorManager : MonoBehaviour
 
     public void DeleteNote() // delete button pressed.
     {
+        if (playMode)
+        {
+            player.MusicStop();
+        }
         if (targetNoteIndex == -1)
             return;
         uiManager.HideNoteInfo();
@@ -370,6 +413,7 @@ public class EditorManager : MonoBehaviour
 
     private void DeleteNote(int index)
     {
+        Camera.main.transform.position = new Vector3(0, noteList[index].transform.position.y, -10);
         Destroy(noteList[index].gameObject);
         noteList.RemoveAt(index);
         if(targetNoteIndex == index)

@@ -1,11 +1,10 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
 public class AudioManager : MonoBehaviour
 {
-    // manage audio play and stop
     private AudioSource audioSource;
     [SerializeField] private UIManager uiManager;
     [SerializeField] private DataManager dataManager;
@@ -15,23 +14,22 @@ public class AudioManager : MonoBehaviour
         audioSource = GetComponent<AudioSource>();
     }
 
-    public bool IsMusicPlaying()
+    public bool IsMusicPlaying()　//　音楽がプレイ中かどうかを返還
     {
         return audioSource.isPlaying;
     }
 
-    public void MusicSelect()
+    public void MusicSelect()　//　音楽を選択
     {
-        string fileAddress = dataManager.MusicFileSelect();
-        if(fileAddress != null )
+        string fileAddress = dataManager.MusicFileSelect();　//　エクスプローラーを開け、音楽ファイルを探す
+        if(fileAddress != null)
         {
             StartCoroutine(ChangeMusic(fileAddress));
         }
     }
 
-    private IEnumerator ChangeMusic(string fileAddress)
+    private IEnumerator ChangeMusic(string fileAddress)　//　音楽ファイルを開ける
     {
-        //change music and play. (if fail to find music, music stop.)
         using(UnityWebRequest www = 
             UnityWebRequestMultimedia.GetAudioClip(fileAddress, AudioType.MPEG))
         {
@@ -49,7 +47,7 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    public bool MusicPlay()
+    public bool MusicPlay()　//　音楽を再生
     {
         if (audioSource == null)
             return false;
@@ -57,17 +55,17 @@ public class AudioManager : MonoBehaviour
         return true;
     }
 
-    public void MusicPause()
+    public void MusicPause()　//　音楽を一時中止
     {
         audioSource.Pause();
     }
 
-    public void MusicResume()
+    public void MusicResume()　//　音楽をまた再生
     {
         audioSource.UnPause();
     }
 
-    public void MusicStop()
+    public void MusicStop()　//　音楽をストップ
     {
         audioSource.Stop();
     }

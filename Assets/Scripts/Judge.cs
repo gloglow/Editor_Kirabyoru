@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,8 +8,8 @@ public class Judge : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // when collide with note
-        if (other.gameObject.layer == 9) // layer of note
+        // ノーツと衝突するとノーツを消す
+        if (other.gameObject.layer == 9) // ノーツのレイヤー
         {
             Note note = other.transform.GetComponent<Note>();
             note.Exit();

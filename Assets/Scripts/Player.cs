@@ -1,150 +1,136 @@
-using System;
+﻿using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
 public class Player : MonoBehaviour
 {
-    // managers
     [SerializeField] private EditorManager editorManager;
     [SerializeField] private ObjectPoolManager poolManager;
     [SerializeField] private UIManager uiManager;
     [SerializeField] private AudioManager audioManager;
 
-    public float bpm; // music bpm.
-    [SerializeField] private int musicStartAfterBeats; // the number of initial beats. set 8.
-    public float secondPerBeat; // second per beat. calculated by bpm.
-    [SerializeField] private int beatCnt; // counting beat.
-                                          // 
-    private float startTime; // start timing of audio system. 
-    private float lastBeatTime; // timing of last beat.
+    public float bpm; // 音楽の速さ
+    [SerializeField] private int musicStartAfterBeats; // 再生ボタンを押し、音楽が始まるまでのディレイ。 8で設定
+    public float secondPerBeat; // ビート当たりの時間。bpmで計算される
+    [SerializeField] private int beatCnt; // ビートのカウンター
+                                          
+    private float startTime; // 音楽が始まった時間（オーディオシステム上の時間） 
+    private float pauseTime; //　音楽が停止された時間
+    private float lastBeatTime; // 以前のビートの時間
 
-    private bool flagPlay;
-    private bool isPause;
-    private float pauseTimer; // save the time when pause button is pressed.
+    private bool isPlay;　//　音楽がプレイされているかどうか
+    private bool isPause;　//　音楽が中止されているかどうか
 
-    [SerializeField] private float spawnYPos; // note spawn position. set 4.
-    private int crtIndex;
-    private int index;
-    [SerializeField] private Vector3 defaultCameraPos; // default camera position. set (0, -2, -10)
+    [SerializeField] private float noteSpawnYPos; // ノーツが生成されるy位置。4で設定
+    [SerializeField] private Vector3 playerCameraPos; // 音楽プレイモードのカメラの位置。(0, -2, -10)で設定
+    
+    private int index;　//　次生成されるノーツのインデックス
+    private EditorNote crtNote;　//　生成されるノーツ
 
-    private EditorNote editorNote;
 
-    public int off;
     private void Start()
     {
-        flagPlay = false;
-        startTime = (float)AudioSettings.dspTime;
-        lastBeatTime = startTime;
-        isPause = true;
-        index = 0;
+        Initialize();　//　初期化
     }
 
     private void Update()
     {
-        if(flagPlay)
+        if(isPlay)
         {
-            if ((Input.GetMouseButtonUp(0))
-                && (EventSystem.current.IsPointerOverGameObject() == false))
-            {
-                Vector3 mousePos = Input.mousePosition;
-                Ray ray = Camera.main.ScreenPointToRay(mousePos);
-                RaycastHit rayHit;
-                if (Physics.Raycast(ray, out rayHit, Mathf.Infinity))
-                {
-                    int rayHitLayer = rayHit.transform.gameObject.layer;
-                    GameObject obj = rayHit.transform.gameObject;
-                    if (rayHitLayer == 9)
-                    {
-                        Note note = obj.GetComponent<Note>();
-                        editorManager.targetNoteIndex = note.index;
-                        uiManager.ShowNoteInfo(editorManager.noteList[note.index]);
-                    }
-
-                }
-            }
-
-            // count beat because note should be activated and move with beat timing.
-            if (AudioSettings.dspTime - lastBeatTime > secondPerBeat) // if over one beat time passed from last beat time, count beat.
+            // 以前ビートの時間から1ビートの時間が経ったらビートカウントを増加
+            if (AudioSettings.dspTime - lastBeatTime > secondPerBeat)
             {
                 beatCnt++;
                 lastBeatTime += secondPerBeat;
 
-                // after first 8 beats, music start.
+                // 再生ボタンが押され、準備時間が過ぎたら音楽を再生
                 if (beatCnt == musicStartAfterBeats + 1)
                 {
                     audioManager.MusicPlay();
                 }
 
-                // there is any note data && current beat == note beat, make note.
+                //　次のノーツが生成されるタイミングになったら生成
                 while (editorManager.noteList.Count > index &&
                     (beatCnt - musicStartAfterBeats + 1) == (editorManager.noteList[index].bar - 1) * 4 + (int)editorManager.noteList[index].beat - 1)
                 {
-                    editorNote = editorManager.noteList[index];
-                    float f; // the waiting time of note. (if note is 1/4 note, not wait.)
-                    if (editorNote.beat == 1) // 1/4 note.
+                    crtNote = editorManager.noteList[index];
+                    float delayTime; // ノーツの生成を遅延させる時間。（1/4音符は０、1/8音符は
+                    if (crtNote.beat == 1) // 1/4音符
                     {
-                        f = 0;
+                        delayTime = 0;
                     }
-                    else // 1/8 note, 1/16 note, etc
+                    else // 1/8音符, 1/16音符
                     {
-                        // if beat of a note is 6.5, at 6th beat, wait 0.5beat time and be made.
-                        f = (editorNote.beat - (int)editorNote.beat) * secondPerBeat * 0.5f;
+                        delayTime = (crtNote.beat - (int)crtNote.beat) * secondPerBeat * 0.5f;
                     }
                     
-                    StartCoroutine(MakeNote(f, index));
+                    StartCoroutine(MakeNote(delayTime, index));
                     index++;
                 }
             }
         }
     }
 
-    IEnumerator MakeNote(float time, int nIndex)
+    private void Initialize()　//　初期化
     {
-        yield return new WaitForSeconds(time);
-        // bring note from note object pool.
+        startTime = (float)AudioSettings.dspTime;
+        lastBeatTime = startTime;
+
+        isPlay = false;
+        isPause = true;
+
+        index = 0;
+    }
+
+    IEnumerator MakeNote(float time, int nIndex)　//　ノーツを生成
+    {
+        yield return new WaitForSeconds(time);　//　ディレイ時間間待機
+
+        //　ノーツを生成
         GameObject obj = poolManager.notePool.Get();
         Note note = obj.GetComponent<Note>();
         note.transform.parent = transform;
         note.player = this;
         note.index = nIndex;
-        //note.initialTime = (float)AudioSettings.dspTime;
 
         EditorNote editorNote = editorManager.noteList[nIndex];
-        // activate note.
+
+        //　ノーツを活性化
         note.status = 1;
-        note.transform.position = new Vector3(editorNote.xPos, spawnYPos, 0);
+        note.transform.position = new Vector3(editorNote.xPos, noteSpawnYPos, 0);
         note.dirVec = new Vector3(editorNote.unitVecX, editorNote.unitVecY, 0);
-        crtIndex++;
+        
         if (isPause) note.status = 0;
     }
 
-    public void MusicPlay()
+    public void MusicPlay()　//　音楽を再生
     {
+        //　editor managerをプレイモードに転換
         editorManager.FlagPlayChange(true);
         editorManager.CameraPosMemory();
-        Camera.main.transform.position = defaultCameraPos;
-        flagPlay = true;
-        lastBeatTime = (float)AudioSettings.dspTime;
-        isPause = false;
         editorManager.BarControl(false);
+
+        Camera.main.transform.position = playerCameraPos;
+        isPlay = true;
+        isPause = false;
+        lastBeatTime = (float)AudioSettings.dspTime;
+        
     }
 
-    public void MusicPause()
+    public void MusicPause()　//　音楽を一時停止
     {
         if (!audioManager.IsMusicPlaying())
-        {
             return;
-        }
 
+        isPlay = false;
         isPause = true;
-        flagPlay = false;
         audioManager.MusicPause();
 
-        // record the time when pause button is pressed.
-        pauseTimer = (float)AudioSettings.dspTime;
+        // 一時停止された時間を記録
+        pauseTime = (float)AudioSettings.dspTime;
 
-        // all of notes stop when pause button is pressed.
+        // 生成された全てのノーツの動作を中止
         for (int i = 0; i < transform.childCount; i++)
         {
             Note note = transform.GetChild(i).GetComponent<Note>();
@@ -154,34 +140,32 @@ public class Player : MonoBehaviour
         uiManager.OnResumeBtn();
     }
 
-    public void Resume()
+    public void Resume()　//　停止されてる音楽をまた再生
     {
-        // unpause.
+        isPlay = true;
         isPause = false;
-        flagPlay = true;
-
-        // add the time passed during pause to lastBeatTime.
-        lastBeatTime += (float)AudioSettings.dspTime - pauseTimer;
+        
+        // 停止されていた時間分、基準時間に反映
+        lastBeatTime += (float)AudioSettings.dspTime - pauseTime;
         audioManager.MusicResume();
 
-        // reactivate notes.
+        // ノーツの動作を再活性化
         int childCnt = transform.childCount;
         for (int i = 0; i < childCnt; i++)
         {
             Note note = transform.GetChild(i).GetComponent<Note>();
-            note.initialTime += (float)AudioSettings.dspTime - pauseTimer;
+            note.initialTime += (float)AudioSettings.dspTime - pauseTime;
             note.status = 2;
         }
 
         uiManager.OnPauseBtn();
     }
 
-    public void MusicStop()
+    public void MusicStop()　//　音楽を中止
     {
-        flagPlay = false;
+        isPlay = false;
         isPause = true;
 
-        crtIndex = 0;
         index = 0;
         beatCnt = 0;
 

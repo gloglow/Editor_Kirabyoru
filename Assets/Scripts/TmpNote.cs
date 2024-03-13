@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,12 +12,12 @@ public class TmpNote : MonoBehaviour
     public float beat;
     public Vector3 dirVec;
     
-    public int status;
+    public int status;　//　動作を制御する変数
 
     private Vector3 startPos;
     [SerializeField] private float spawnYPos;
 
-    public bool flagMake;
+    public bool flagMake;　//　true：ノーツを作る　false：ノーツの方向ベクトルだけ修正
 
     private void Start()
     {
@@ -28,13 +28,13 @@ public class TmpNote : MonoBehaviour
     {
         switch (status)
         {
-            case 0: // initialize
+            case 0: // 初期化
                 Initialize();
                 break;
-            case 1: // decide note xPos
+            case 1: // ノーツのx座標を決定
                 DecideXPos();
                 break;
-            case 2: // decide direction vector
+            case 2: // ノーツの方向ベクトルを決定
                 DecideDirection();
                 break;
         }
@@ -42,7 +42,6 @@ public class TmpNote : MonoBehaviour
 
     private void Initialize()
     {
-        //lineRenderer.enabled = false;
         lineRenderer.SetPosition(0, Vector3.zero);
         lineRenderer.SetPosition(1, Vector3.zero);
 
@@ -52,9 +51,9 @@ public class TmpNote : MonoBehaviour
             status = 2;
     }
 
-    private void DecideXPos()
+    private void DecideXPos()　//　ノーツのx座標を決定
     {
-        if (Input.GetMouseButton(0))
+        if (Input.GetMouseButton(0))　//　マウスでドラッグし、位置を決定
         {
             float mouseX = Camera.main.ScreenToWorldPoint(Input.mousePosition).x;
             mouseX = Mathf.RoundToInt(mouseX);
@@ -63,15 +62,14 @@ public class TmpNote : MonoBehaviour
         if (Input.GetMouseButtonUp(0))
         {
             xPos = transform.position.x;
-            //startPos = transform.position;
             status = 2;
         }
     }
 
-    private void DecideDirection()
+    private void DecideDirection()　// ノーツの方向ベクトルを決定
     {
         startPos = transform.position;
-        if (Input.GetMouseButton(0))
+        if (Input.GetMouseButton(0))　//　マウスでドラッグし、方向を決定
         {
             Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             mousePos = new Vector3(mousePos.x, mousePos.y, 0);
@@ -79,7 +77,7 @@ public class TmpNote : MonoBehaviour
             dirVec.Normalize();
             dirVec = new Vector3(OnlyTenthPlaceValue(dirVec.x), OnlyTenthPlaceValue(dirVec.y), 0);
 
-            int layerMask = (1 << 7); // layer of judgeline
+            int layerMask = (1 << 7); // 判定線のpartオブジェクトのレイヤー
             RaycastHit rayHit;
             if (Physics.Raycast(transform.position, dirVec, out rayHit, Mathf.Infinity, layerMask))
             {

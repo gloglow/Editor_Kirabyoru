@@ -12,44 +12,39 @@ public class UIManager : MonoBehaviour
     [SerializeField] private EditorManager editorManager;
     [SerializeField] private Player player;
 
-    // UI set
+    // UIセット
     [SerializeField] private GameObject defaultUI;
     [SerializeField] private GameObject optionUI;
 
-    // Button
-    [SerializeField] private Image imageNoteModifyBtn;
-    private bool modifyOnOff = false;
+    // ボタン
     [SerializeField] private GameObject pauseBtn;
     [SerializeField] private GameObject resumeBtn;
 
-    // note info UI
+    // ノーツ情報UI
     [SerializeField] private GameObject noteInfo;
     [SerializeField] private TextMeshProUGUI barBeatText;
     [SerializeField] private TextMeshProUGUI xPosText;
     [SerializeField] private TextMeshProUGUI unitVecXText;
     [SerializeField] private TextMeshProUGUI unitVecYText;
 
-    // menu UI
+    // メニューUI
     [SerializeField] private TextMeshProUGUI songText;
 
-    // option UI
+    // オプションUI
     [SerializeField] private TMP_InputField bpmInput;
-
-    // help UI
-    [SerializeField] private GameObject helpUI;
 
     private void Start()
     {
-        InitiallizeNoteInfo();
-        ChangeOption();
+        InitiallizeNoteInfo();　// ノーツ情報を初期化
+        ChangeOption();　//　オプションの初期状態を適用
     }
 
-    public void ChangeSongText(string text) // when music selected.
+    public void ChangeSongText(string text) // 音楽のタイトルを表示
     {
         songText.text = text;
     }
 
-    public void InitiallizeNoteInfo() // initialize note info UI.
+    public void InitiallizeNoteInfo() // ノーツ情報を初期化
     {
         barBeatText.text = string.Empty;
         xPosText.text = string.Empty;
@@ -57,7 +52,7 @@ public class UIManager : MonoBehaviour
         unitVecYText.text = string.Empty;
     }
 
-    public void ShowNoteInfo(EditorNote editorNote) // ノーツがクリックされた時
+    public void ShowNoteInfo(EditorNote editorNote) // ノーツがクリックされた時、ノーツ情報を表示
     {
         noteInfo.gameObject.SetActive(true);
         barBeatText.text = editorNote.bar.ToString() + " - " + editorNote.beat.ToString();
@@ -66,62 +61,46 @@ public class UIManager : MonoBehaviour
         unitVecYText.text = editorNote.unitVecY.ToString();
     }
 
-    public void HideNoteInfo()
+    public void HideNoteInfo()　//　ノーツ情報を非表示
     {
         noteInfo.gameObject.SetActive(false);
     }
 
-    public void OnHelpUI()
-    {
-
-    }
-
-    public void OffHelpUI()
-    {
-
-    }
-
-    public void ChangeOption() // option change.
+    public void ChangeOption() //　変わったオプションを適用
     {
         player.bpm = int.Parse(bpmInput.text);
         player.secondPerBeat = 60 / player.bpm;
     }
 
-    public void OnPauseBtn()
+    public void OnPauseBtn()　//　pauseボタン活性化、resumeボタン非活性化
     {
         pauseBtn.gameObject.SetActive(true);
         resumeBtn.gameObject.SetActive(false);
     }
 
-    public void OnResumeBtn()
+    public void OnResumeBtn()　//　pauseボタン非活性化、resumeボタン活性化
     {
         pauseBtn.gameObject.SetActive(false);
         resumeBtn.gameObject.SetActive(true);
     }
 
-    public void BackToDefault()
+    public void BackToDefault()　//　ディフォルトUI
     {
         defaultUI.SetActive(true);
         optionUI.SetActive(false);
     }
 
-    public void OnMenu()
-    {
-        defaultUI.SetActive(false);
-        optionUI.SetActive(false);
-    }
-
-    public void OnOptionUI()
+    public void OnOptionUI()　//　オプションUIを表示
     {
         optionUI.SetActive(true);
     }
 
-    public void OffOptionUI()
+    public void OffOptionUI()　//　オプションUIを非表示
     {
         optionUI.SetActive(false);
     }
 
-    public void NoteMakeMode()
+    public void NoteMakeMode()　//　ノーツ生成モード
     {
         defaultUI.SetActive(false);
         optionUI.SetActive(false);

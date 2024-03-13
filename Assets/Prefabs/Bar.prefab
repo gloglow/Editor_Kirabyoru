@@ -49,6 +49,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   barNum: 0
+  theNumberOfBeats: 4
+  theNumberOfSubbeats: 4
 --- !u!1001 &1310028572681083485
 PrefabInstance:
   m_ObjectHideFlags: 0

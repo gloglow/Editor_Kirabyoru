@@ -78,7 +78,6 @@
     <Compile Include="Assets\Scripts\AudioManager.cs" />
     <Compile Include="Assets\Scripts\Bar.cs" />
     <Compile Include="Assets\Scripts\TmpNote.cs" />
-    <Compile Include="Assets\Scripts\Beat.cs" />
     <Compile Include="Assets\LitJson\JsonReader.cs" />
     <Compile Include="Assets\Scripts\CameraResolution.cs" />
     <Compile Include="Assets\Scripts\SubBeat.cs" />

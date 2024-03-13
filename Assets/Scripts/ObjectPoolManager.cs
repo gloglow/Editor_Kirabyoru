@@ -1,27 +1,27 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 
 public class ObjectPoolManager : MonoBehaviour
 {
-    public IObjectPool<GameObject> notePool { get; private set; } // object pool of notes.
+    public IObjectPool<GameObject> notePool { get; private set; }　//　ノーツのオブジェクトプール
 
-    [SerializeField] private int noteMaxCnt; // the default number of notes. 
-    [SerializeField] private GameObject prefab_note; // prefab of note.
+    [SerializeField] private int noteMaxCnt;　//　基本生成されるノーツの数
+    [SerializeField] private GameObject prefab_note;
 
     private void Awake()
     {
-        Initialize(); // create object pool and objects.
+        Initialize(); //　オブジェクトプールとノーツを生成
     }
 
     public void Initialize()
     {
-        // create note object pool.
+        // オブジェクトプールを生成
         notePool = new ObjectPool<GameObject>(CreateNote, BringNoteFromPool, ReturnNoteToPool
             , notdestroybuttmp, true, noteMaxCnt, noteMaxCnt);
 
-        // create notes and let them in pool.
+        // ノーツを生成し、プールに入れる
         for (int i = 0; i< noteMaxCnt; i++)
         {
             Note note = CreateNote().GetComponent<Note>();

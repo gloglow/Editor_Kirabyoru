@@ -372,7 +372,6 @@
 "Assets/LitJson/ParserToken.cs"
 "Assets/Scripts/AudioManager.cs"
 "Assets/Scripts/Bar.cs"
-"Assets/Scripts/Beat.cs"
 "Assets/Scripts/CameraResolution.cs"
 "Assets/Scripts/DataManager.cs"
 "Assets/Scripts/EditorJudgeLine.cs"

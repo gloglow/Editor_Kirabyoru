@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Windows.Forms;
@@ -9,11 +9,9 @@ using System.Text.RegularExpressions;
 
 public class DataManager : MonoBehaviour
 {
-    // managers
     [SerializeField] private EditorManager editorManager;
     [SerializeField] private UIManager uiManager;
 
-    // for open files
     private VistaOpenFileDialog openDialog;
     private VistaSaveFileDialog saveDialog;
     private Stream openStream = null;
@@ -24,9 +22,8 @@ public class DataManager : MonoBehaviour
         saveDialog = new VistaSaveFileDialog();
     }
 
-    public string MusicFileSelect() // select file and return its address
+    public string MusicFileSelect()　//　音楽ファイルを選択
     {
-        // open file selecting screen
         openDialog.Filter = "wav files (*.wav)|*.wav|mp3 files (*.mp3)|*.mp3";
         openDialog.FilterIndex = 2;
         openDialog.Title = "Music File Dialog";
@@ -34,23 +31,22 @@ public class DataManager : MonoBehaviour
 
         if(fileAddress != null)
         {
-            // file address -> file name
+            // 音楽タイトルを分かるため、ファイルのアドレスをファイルの名前に変換
             Regex regex = new Regex(@"\..*$");
             uiManager.ChangeSongText(regex.Replace(Path.GetFileName(fileAddress), ""));
         }
         return fileAddress;
     }
 
-    private string JsonFileSelect() // select file and return its address
+    private string JsonFileSelect()　//　譜面ファイルを選択
     {
-        // open file selecting screen
         openDialog.Filter = "json files (*.json)|*.json";
         openDialog.FilterIndex = 1;
         openDialog.Title = "json File Dialog";
         return FileOpen();
     }
 
-    private string FileOpen() // open file dialog
+    private string FileOpen()　//　エクスプローラーを開ける
     {
         if (openDialog.ShowDialog() == DialogResult.OK)
         {
@@ -62,7 +58,7 @@ public class DataManager : MonoBehaviour
         return null;
     }
 
-    public void FileSave(List<NoteData> noteList) // get noteList and transform to json file.
+    public void FileSave(List<NoteData> noteList)　//　ノーツのリストを譜面ファイルに変換
     {
         JsonData jsondata = JsonMapper.ToJson(noteList);
 
@@ -75,24 +71,24 @@ public class DataManager : MonoBehaviour
         }
     }
     
-    public void SheetSelect() // if load button pressed, call this method
+    public void SheetSelect()　// ロードボタンを押すと、譜面ファイルを選択、それをノーツのリストに変換してeditor managerに渡す
     {
         LoadSheetFile(JsonFileSelect());
     }
 
-    private void LoadSheetFile(string fileAddress) // Load JSON file having Note information.
+    private void LoadSheetFile(string fileAddress)　// 譜面ファイルを読み込み、ノーツを追加させる
     {
         if (File.Exists(fileAddress))
         {
-            // load json file.
+            //　譜面ファイルのデータを読み込む
             var fileText = File.ReadAllText(fileAddress);
             JsonData jData = JsonMapper.ToObject(fileText.ToString());
             
-            // initialize setting.
+            //　エディター設定を初期化
             editorManager.Initialize();
             uiManager.InitiallizeNoteInfo();
             
-            // add notes from json data.
+            //　ノーツデータの通りにノーツを一つずつ追加
             for (int i = 0; i < jData.Count; i++)
             {
                 float xPos = float.Parse(jData[i]["xPos"].ToString());

@@ -14,31 +14,29 @@ public class EditorManager : MonoBehaviour
     [SerializeField] private Player player;
     [SerializeField] private TmpNote tmpNote;
 
-    // prefab.
+    // プレハブ
     [SerializeField] private GameObject prefab_bar;
     [SerializeField] private GameObject prefab_note;
 
-    // bar
+    // バー
     [SerializeField] private GameObject bars;
     [SerializeField] private List<Bar> barList;
 
-    // note.
+    // ノーツ関連
     public List<EditorNote> noteList = new List<EditorNote>();
+    public int targetNoteIndex;　//　現在選択しているノーツ
 
+    // カメラコントロール
     private Vector2 mousePos; 
     [SerializeField] private Vector3 memoryCameraPos;
-    [SerializeField] private int barInterval; // interval between bars. set 8
-    [SerializeField] private int nextBarYPos; // when make new bar, its position. set (0, 4, 0) 
-    
-    public int targetNoteIndex;
+    [SerializeField] private int barInterval; // バー間間隔。8で設定
+    [SerializeField] private int nextBarYPos; // 次のバーが生成される位置のy座標
+    [SerializeField] float scrollSpeed; // ドラッグして画面を動かす時の速度。0.0002で設定
 
-    private bool makeNoteMode = false;
-    private bool playMode = false;
-
-    [SerializeField] float scrollSpeed; // set 0.0002
-
-    public int status;
-    private GameObject rayHitObj;
+    // エディター動作制御
+    private bool isPlayMode = false;　//　音楽プレイモードかどうか
+    public int status;　//　エディター動作状態
+    private GameObject rayHitObj;　//　ユーザーがクリックしたオブジェクト
 
 
     void Update()
@@ -47,33 +45,35 @@ public class EditorManager : MonoBehaviour
         {
             case 0: // 基本状態
                 
+                //　ドラッグ：画面スクロール
                 if (Input.GetMouseButtonDown(0))
                 {
                     mousePos = Input.mousePosition;
                 }
-                if (!playMode && Input.GetMouseButton(0))
+                if (!isPlayMode && Input.GetMouseButton(0))
                 {
                     Camera.main.transform.position += new Vector3(0, (mousePos.y - Input.mousePosition.y) * scrollSpeed, 0);
                 }
                 
+                //　ユーザーがクリックしたオブジェクトの種類をチェック
                 if ((Input.GetMouseButtonUp(0))
                 && (EventSystem.current.IsPointerOverGameObject() == false))
                 {
-                    if (Vector3.Distance(mousePos, Input.mousePosition) < 1)
+                    if (Vector3.Distance(mousePos, Input.mousePosition) < 1)　//　クリックした状態で１以上マウスを動かしたら「クリック」じゃなく「ドラッグ」で認識
                     {
-                        int rayHitLayer = LayerFromMouseRay();
+                        int rayHitLayer = LayerFromMouseRay();　//　クリックしたオブジェクトのレイヤー
                         switch (rayHitLayer)
                         {
-                            case 6: // バー
+                            case 6: // バーをクリックした場合：ノーツを生成
                                 UnSelectNote();
-                                MakeNote(rayHitObj);
+                                MakeNote(rayHitObj);　//　クリックしたバーの上にノーツを生成
                                 status = 1;
                                 break;
-                            case 8: //　エディターノーツ
+                            case 8: //　エディターモードでノーツをクリックした場合：ノーツを選択し、ノーツの編集ができるようにする
                                 SelectNote(FindNoteIndex(rayHitObj.GetComponent<EditorNote>()));
                                 status = 2;
                                 break;
-                            case 9: //　ノーツ
+                            case 9: //　音楽プレイモードでノーツをクリックした場合：ノーツを選択
                                 Note note = rayHitObj.GetComponent<Note>();
                                 SelectNote(note.index);
                                 break;
@@ -84,13 +84,13 @@ public class EditorManager : MonoBehaviour
                     }
                 }
                 break;
-            case 1: // バーがクリックされた時（ノーツを作る）
+            case 1: // バーがクリックされた場合：ノーツを生成するために他の作動は中止
 
                 break;
-            case 2: // ノーツがクリックされた時
+            case 2: // エディターモードでノーツをクリックした場合
                 if (Input.GetMouseButtonDown(0) && (EventSystem.current.IsPointerOverGameObject() == false))
                 {
-                    if (LayerFromMouseRay() != 8)
+                    if (LayerFromMouseRay() != 8)　//　ノーツではないものをクリック：選択解除
                     {
                         UnSelectNote();
                         mousePos = Input.mousePosition;
@@ -98,7 +98,7 @@ public class EditorManager : MonoBehaviour
                         break;
                     }
                 }
-                if (Input.GetMouseButton(0) && (EventSystem.current.IsPointerOverGameObject() == false))
+                if (Input.GetMouseButton(0) && (EventSystem.current.IsPointerOverGameObject() == false))　//　ノーツをドラッグ：ノーツ移動
                 {
                     EditNotePos();
                 }
@@ -110,16 +110,16 @@ public class EditorManager : MonoBehaviour
         }
     }
 
-    public void CameraPosMemory()
+    public void CameraPosMemory()　//　現在のカメラの位置を記憶
     {
         memoryCameraPos = Camera.main.transform.position;
     }
 
-    public void BackToEditorMode()
+    public void BackToEditorMode() //　音楽プレイモード　→　エディターモード
     {
-        playMode = false;
+        isPlayMode = false;
         BarControl(true);
-        for (int i = 0; i < transform.childCount; i++)
+        for (int i = 0; i < transform.childCount; i++)　//　プレイモードのノーツを全部日活性化
         {
             if (transform.GetChild(i).gameObject.activeSelf)
             {
@@ -127,20 +127,20 @@ public class EditorManager : MonoBehaviour
                 note.Exit();
             }
         }
-        Camera.main.transform.position = memoryCameraPos;
+        Camera.main.transform.position = memoryCameraPos;　//　記憶しておいた位置にカメラを移動
     }
 
-    public void EditNoteDirection()
+    public void EditNoteDirection()　//　ノーツの方向ベクトル編集
     {
-        if (targetNoteIndex == -1)
+        if (targetNoteIndex == -1)　//　選択しているノーツがなければ
             return;
-        if (playMode)
-        {
+        if (isPlayMode)　//　音楽プレイモード→エディターモード
             player.MusicStop();
-        }
+
         status = 1;
         BarControl(false);
         uiManager.NoteMakeMode();
+
         memoryCameraPos = Camera.main.transform.position;
         Camera.main.transform.position = new Vector3(0, 0, -10);
 
@@ -149,10 +149,9 @@ public class EditorManager : MonoBehaviour
         tmpNote.transform.position = new Vector3(noteList[targetNoteIndex].xPos, tmpNote.transform.position.y, tmpNote.transform.position.z);
         tmpNote.status = 0;
         tmpNote.flagMake = false;
-        makeNoteMode = true;
     }
 
-    private int LayerFromMouseRay()
+    private int LayerFromMouseRay()　//　マウスからのrayに打たれたオブジェクトのレイヤー
     {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit rayHit;
@@ -162,15 +161,14 @@ public class EditorManager : MonoBehaviour
             rayHitLayer = rayHit.transform.gameObject.layer;
             rayHitObj = rayHit.transform.gameObject;
         }
-        Debug.Log(rayHitLayer);
         return rayHitLayer;
     }
 
-    private void MakeNote(GameObject rayHit)
+    private void MakeNote(GameObject rayHit)　//　ノーツを生成
     {
         bars.gameObject.SetActive(false);
         uiManager.NoteMakeMode();
-        memoryCameraPos = Camera.main.transform.position;
+        CameraPosMemory();
         Camera.main.transform.position = new Vector3(0, 0, -10);
 
         SubBeat beatPart = rayHit.GetComponent<SubBeat>();
@@ -180,16 +178,17 @@ public class EditorManager : MonoBehaviour
         tmpNote.transform.position = new Vector3(0, 4, 0);
         tmpNote.status = 0;
         tmpNote.flagMake = true;
-        makeNoteMode = true;
     }
 
-    private void SelectNote(int index)
+    private void SelectNote(int index)　//　ノーツを選択
     {
-        if(targetNoteIndex != -1)
+        if(targetNoteIndex != -1) 
         {
             UnSelectNote();
         }
+
         targetNoteIndex = index;
+
         if (targetNoteIndex != -1)
         {
             MeshRenderer meshRenderer = noteList[targetNoteIndex].GetComponent<MeshRenderer>();
@@ -198,19 +197,20 @@ public class EditorManager : MonoBehaviour
         }
     }
 
-    private void UnSelectNote()
+    private void UnSelectNote()　//　ノーツの選択を解除
     {
         if(targetNoteIndex == -1)
         {
             return;
         }
+
         MeshRenderer meshRenderer = noteList[targetNoteIndex].GetComponent<MeshRenderer>();
         meshRenderer.material.color = Color.blue;
         targetNoteIndex = -1;
         uiManager.HideNoteInfo();
     }
 
-    private int FindNoteIndex(EditorNote note) // find note index from noteList. if failed, return -1.
+    private int FindNoteIndex(EditorNote note)　//　ノーツのインデックスを探す
     {
         for(int i = 0; i<noteList.Count; i++)
         {
@@ -220,39 +220,37 @@ public class EditorManager : MonoBehaviour
         return -1;
     }
 
-    private void EditNotePos()
+    private void EditNotePos()　//　ノーツの位置を編集
     {
         if (targetNoteIndex == -1)
             return;
+
         EditorNote editorNote = noteList[targetNoteIndex];
+
         float xPos = Camera.main.ScreenToWorldPoint(Input.mousePosition).x;
         xPos = Mathf.RoundToInt(xPos);
+
         int bar = editorNote.bar;
         float beat = editorNote.beat;
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        RaycastHit rayHit;
-        if (Physics.Raycast(ray, out rayHit, Mathf.Infinity))
+
+        if(LayerFromMouseRay() == 6) //　バーのレイヤー
         {
-            int rayHitLayer = rayHit.transform.gameObject.layer;
-            GameObject obj = rayHit.transform.gameObject;
-            if (rayHitLayer == 6) // バーがクリックされた時
-            {
-                SubBeat subBeat = obj.GetComponent<SubBeat>();
-                bar = subBeat.barNum;
-                beat = subBeat.beatNum;
-            }
+            SubBeat subBeat = rayHitObj.GetComponent<SubBeat>();
+            bar = subBeat.barNum;
+            beat = subBeat.beatNum;
         }
+
         noteList[targetNoteIndex] = NoteSetting(editorNote, xPos, bar, beat, editorNote.unitVecX, editorNote.unitVecY);
         uiManager.ShowNoteInfo(noteList[targetNoteIndex]);
     }
 
 
-    public void BarControl(bool flag) // play mode -> bar off, editor mode -> bar on
+    public void BarControl(bool flag)　//　バーを活性化・非活性化
     {
         bars.gameObject.SetActive(flag);
     }
 
-    public void Initialize() // editor initialize. 
+    public void Initialize()　//　エディターを初期化 
     {
         while(barList.Count > 0)
         {
@@ -263,22 +261,10 @@ public class EditorManager : MonoBehaviour
 
     public void FlagPlayChange(bool flag)
     {
-        playMode = flag;
+        isPlayMode = flag;
     }
 
-    private void ScreenDrag() // in editor mode, scroll by mouse
-    {
-        if (Input.GetMouseButtonDown(0))
-        {
-            mousePos = Input.mousePosition;
-        }
-        if (Input.GetMouseButton(0))
-        {
-            Camera.main.transform.position += new Vector3(0, (mousePos.y - Input.mousePosition.y) * scrollSpeed, 0);
-        }
-    }
-
-    public void MakeBar() // when make bar button pressed.
+    public void MakeBar() // バーを生成
     {
         GameObject obj = Instantiate(prefab_bar, bars.transform);
         Bar bar = obj.GetComponent<Bar>();
@@ -288,12 +274,12 @@ public class EditorManager : MonoBehaviour
         nextBarYPos += barInterval;
     }
 
-    public void DeleteBar() // when delete bar button pressed.
+    public void DeleteBar() // バーを削除する
     {
         if (barList.Count <= 0)
             return;
 
-        // remove notes on bar.
+        // 削除するバーの中にあるノーツを削除
         for (int i = noteList.Count - 1; i >= 0; i--)
         {
             if (noteList[i].bar >= barList.Count)
@@ -304,52 +290,50 @@ public class EditorManager : MonoBehaviour
                 break;
         }
 
-        // remove bar.
+        // バーを削除
         Destroy(barList[barList.Count - 1].gameObject);
         barList.RemoveAt(barList.Count - 1);
         nextBarYPos -= barInterval;
     }
 
-    public void AddNote(float xPos, int bar, float beat, float unitVecX, float unitVecY)
+    public void AddNote(float xPos, int bar, float beat, float unitVecX, float unitVecY)　//　ノーツを追加
     {
-        // if there isnt bar
-        BarMakeForNoteMaking(bar - 1);
+        BarMakeForNoteMaking(bar - 1);　//　必要により、ノーツを追加するためにバーを生成する
 
-        // make note
+        // ノーツ生成
         GameObject obj = Instantiate(prefab_note);
         EditorNote editorNote = obj.GetComponent<EditorNote>();
         editorNote = NoteSetting(editorNote, xPos, bar, beat, unitVecX, unitVecY);
         editorNote.arrow.transform.rotation = Quaternion.Euler(0, 0, unitVecX * 90f);
         noteList.Add(editorNote);
         noteList.Sort(NoteCompare);
+
+        //　追加したノーツを選択
         targetNoteIndex = FindNoteIndex(editorNote);
-        
         if(targetNoteIndex != -1)
         {
             UnSelectNote();
         }
-        makeNoteMode = false;
-        bars.gameObject.SetActive(true);
+        SelectNote(targetNoteIndex);
+
+        BarControl(true);
         uiManager.BackToDefault();
         Camera.main.transform.position = memoryCameraPos;
-        SelectNote(targetNoteIndex);
-        uiManager.ShowNoteInfo(editorNote);
     }
 
-    public void ModifyNoteDir(float xVec, float yVec)
+    public void ModifyNoteDir(float xVec, float yVec)　//　ノーツの方向ベクトルを修正
     {
         noteList[targetNoteIndex].unitVecX = xVec;
         noteList[targetNoteIndex].unitVecY = yVec;
         noteList[targetNoteIndex].arrow.transform.rotation = Quaternion.Euler(0, 0, xVec * 90f);
-        makeNoteMode = false;
-        bars.gameObject.SetActive(true);
+
         Camera.main.transform.position = new Vector3(0, noteList[targetNoteIndex].transform.position.y, -10);
-        
+        BarControl(true);
         uiManager.BackToDefault();
         uiManager.ShowNoteInfo(noteList[targetNoteIndex]);
     }
 
-    private int NoteCompare(EditorNote note1, EditorNote note2) // sort notes by bar and beat.
+    private int NoteCompare(EditorNote note1, EditorNote note2) // ノーツリストをbarとbeatで整列するための関数
     {
         if(note1.bar < note2.bar)
         {
@@ -365,15 +349,6 @@ public class EditorManager : MonoBehaviour
         }
     }
 
-    public void ModifyNote(float xPos, int bar, float beat, float unitVecX, float unitVecY) // modify button pressed.
-    {
-        // if there isnt bar
-        BarMakeForNoteMaking(bar - 1);
-
-        // note modify.
-        noteList[targetNoteIndex] = NoteSetting(noteList[targetNoteIndex], xPos, bar, beat, unitVecX, unitVecY);
-    }
-
     private void BarMakeForNoteMaking(int actualBar)
     {
         while (barList.Count <= actualBar)
@@ -382,7 +357,7 @@ public class EditorManager : MonoBehaviour
         }
     }
 
-    private EditorNote NoteSetting(EditorNote editorNote, float xPos, int bar, float beat, float unitVecX, float unitVecY)
+    private EditorNote NoteSetting(EditorNote editorNote, float xPos, int bar, float beat, float unitVecX, float unitVecY)　//　伝達もらった値でノーツをセッティング
     {
         editorNote.xPos = xPos;
         editorNote.bar = bar;
@@ -399,23 +374,25 @@ public class EditorManager : MonoBehaviour
         return editorNote;
     }
 
-    public void DeleteNote() // delete button pressed.
+    public void ReadyToDeleteNote() //　ノーツを削除
     {
-        if (playMode)
+        if (isPlayMode)
         {
             player.MusicStop();
         }
         if (targetNoteIndex == -1)
             return;
+
         uiManager.HideNoteInfo();
         DeleteNote(targetNoteIndex);
     }
 
-    private void DeleteNote(int index)
+    private void DeleteNote(int index)　//　インデックスを確認し、ノーツを削除
     {
-        Camera.main.transform.position = new Vector3(0, noteList[index].transform.position.y, -10);
+        Camera.main.transform.position = new Vector3(0, noteList[index].transform.position.y, -10); //　削除されたノーツの位置にカメラを移動
         Destroy(noteList[index].gameObject);
         noteList.RemoveAt(index);
+
         if(targetNoteIndex == index)
         {
             targetNoteIndex = -1;
@@ -423,7 +400,7 @@ public class EditorManager : MonoBehaviour
         }
     }
 
-    public void SheetSave() // save current note list into json file. 
+    public void SheetSave() // ノーツリストを作り、譜面ファイルを生成するためにdata managerに渡す 
     { 
         List<NoteData> notes = new List<NoteData>();
         for(int i = 0; i < noteList.Count; i++)
@@ -439,7 +416,7 @@ public class EditorManager : MonoBehaviour
         dataManager.FileSave(notes);
     }
 
-    public void Quit()
+    public void Quit()　//　ゲーム終了
     {
         UnityEngine.Application.Quit();
     }

@@ -55,7 +55,7 @@ public class Player : MonoBehaviour
                     (beatCnt - musicStartAfterBeats + 1) == (editorManager.noteList[index].bar - 1) * 4 + (int)editorManager.noteList[index].beat - 1)
                 {
                     crtNote = editorManager.noteList[index];
-                    float delayTime; // ノーツの生成を遅延させる時間。（1/4音符は０、1/8音符は
+                    float delayTime; // ノーツの生成を遅延させる時間。（1/4音符は０、1/8音符は0.5)
                     if (crtNote.beat == 1) // 1/4音符
                     {
                         delayTime = 0;
@@ -64,8 +64,7 @@ public class Player : MonoBehaviour
                     {
                         delayTime = (crtNote.beat - (int)crtNote.beat) * secondPerBeat * 0.5f;
                     }
-                    
-                    StartCoroutine(MakeNote(delayTime, index));
+                    StartCoroutine(MakeNote(delayTime + secondPerBeat * 0.5f, index));
                     index++;
                 }
             }
